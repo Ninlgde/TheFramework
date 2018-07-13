@@ -32,6 +32,10 @@ module ninlgde {
             return GameFrame.instance
         }
 
+        /**
+         * frame初始化
+         * 初始化所有不需要coocs支持的模块
+         */
         private init() {
             // 初始化框架log
             log = new Logger(7)
@@ -39,7 +43,15 @@ module ninlgde {
             // 初始化pureMVC
             app = puremvc.Facade.getInstance(this.GAME_NAME)
 
-            ninlgde.log.info(this._TAG, "{0} is a {1} log", "This", "test")
+            ninlgde.log.info(this._TAG, "Ninlgde Framework has initialized")
+        }
+
+        /**
+         * frame start
+         * GameMain的start里调用，用于启动framework
+         */
+        public start(): boolean {
+            return true
         }
 
         public getGameName(): string {
