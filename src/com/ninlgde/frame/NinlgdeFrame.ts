@@ -1,3 +1,5 @@
+///<reference path='../../../org/puremvc/typescript/multicore/patterns/facade/Facade.ts'/>
+
 module ninlgde {
     "use strict";
 
@@ -39,9 +41,10 @@ module ninlgde {
         private init() {
             // 初始化框架log
             log = new Logger(7)
-
             // 初始化pureMVC
             app = puremvc.Facade.getInstance(this.GAME_NAME)
+            // 创建UImanager
+            UIManager.create()
 
             ninlgde.log.info(this._TAG, "Ninlgde Framework has initialized")
         }

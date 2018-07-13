@@ -5,6 +5,298 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var ninlgde;
 (function (ninlgde) {
+    "use strict";
+    var EventCenter = (function () {
+        function EventCenter() {
+            this._TAG = "EventCenter";
+            this.eventMap = null; //
+            this.eventMap = new ninlgde.datastruct.HashMap();
+        }
+        EventCenter.getInstance = function () {
+            if (this.instance == null) {
+                this.instance = new EventCenter();
+            }
+            return this.instance;
+        };
+        EventCenter.prototype.fireEvent = function (event) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+            var events = this.eventMap.get(event);
+            if (events != null) {
+                events.forEach(function (e) {
+                    if (e) {
+                        e.getHandler().apply(e.getScope(), args);
+                    }
+                });
+            }
+        };
+        EventCenter.prototype.registEventListener = function (event, handler, scope) {
+            if (typeof event != "string" || typeof handler != "function") {
+                ninlgde.log.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler);
+                return;
+            }
+            var events = this.eventMap.get(event);
+            if (events == null) {
+                events = new Array();
+                this.eventMap.put(event, events);
+            }
+            var listener = new ninlgde.EventListener(handler, scope);
+            events.push(listener);
+        };
+        EventCenter.prototype.unregistEventListener = function (event, handler, scope) {
+            var events = this.eventMap.get(event);
+            if (events == null) {
+                return;
+            }
+            var newEvents = events.filter(function (e) {
+                return e.getHandler() != handler || e.getScope() != scope;
+            });
+            this.eventMap.put(event, newEvents);
+            events = null;
+        };
+        EventCenter.prototype.unregistScope = function (scope) {
+            var _this = this;
+            this.eventMap.forEach(function (event, events) {
+                var newEvents = events.filter(function (e) {
+                    return e.getScope() != scope;
+                });
+                _this.eventMap.put(event, newEvents);
+            });
+        };
+        return EventCenter;
+    }());
+    ninlgde.EventCenter = EventCenter;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var EventListener = (function () {
+        function EventListener(handler, scope) {
+            this.handler = handler;
+            this.scope = scope;
+        }
+        EventListener.prototype.getScope = function () {
+            return this.scope;
+        };
+        EventListener.prototype.getHandler = function () {
+            return this.handler;
+        };
+        return EventListener;
+    }());
+    ninlgde.EventListener = EventListener;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    var net;
+    (function (net) {
+        "use strict";
+    })(net = ninlgde.net || (ninlgde.net = {}));
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    var net;
+    (function (net) {
+        "use strict";
+    })(net = ninlgde.net || (ninlgde.net = {}));
+})(ninlgde || (ninlgde = {}));
+///<reference path='../../utils/Assert.ts' />
+///<reference path='IConnectionHandler.ts' />
+var ninlgde;
+(function (ninlgde) {
+    var net;
+    (function (net) {
+        "use strict";
+        var ConnectionState;
+        (function (ConnectionState) {
+            ConnectionState[ConnectionState["CLOSED"] = 0] = "CLOSED";
+            ConnectionState[ConnectionState["CONNECTING"] = 1] = "CONNECTING";
+            ConnectionState[ConnectionState["CONNECTED"] = 2] = "CONNECTED";
+        })(ConnectionState || (ConnectionState = {}));
+        var Connection = (function () {
+            function Connection(handler) {
+                this.socket = null;
+                this.connectionState = ConnectionState.CLOSED;
+                this.timeoutId = 0;
+                this.url = "";
+                this.handler = handler;
+            }
+            Connection.prototype.createSocket = function () {
+                var _this = this;
+                var socket = new WebSocket(this.url);
+                socket.binaryType = 'arraybuffer';
+                socket.onopen = function (event) {
+                    if (_this.onConnectionCreated) {
+                        _this.onConnectionCreated(event);
+                    }
+                };
+                socket.onmessage = function (event) {
+                    if (_this.onMessage) {
+                        _this.onMessage(event);
+                    }
+                };
+                socket.onerror = function (event) {
+                    if (_this.onConnectionError) {
+                        _this.onConnectionError(event);
+                    }
+                };
+                socket.onclose = function (event) {
+                    if (_this.onConnectionClosed) {
+                        _this.onConnectionClosed(event);
+                    }
+                };
+                return socket;
+            };
+            Connection.prototype.connection = function (url) {
+                ninlgde.Assert.isFalse(this.socket == null, "websocket should be null");
+                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CLOSED, "connection state should be closed");
+                ninlgde.Assert.isTrue(url === "", "url error");
+                this.url = url;
+                this.socket = this.createSocket();
+                this.timeoutId = this.setTimeOut();
+                return true;
+            };
+            Connection.prototype.send = function (message) {
+                if (ninlgde.Assert.isTrue(this.socket == null, "websocket is null")) {
+                    return false;
+                }
+                if (ninlgde.Assert.isTrue(this.connectionState != ConnectionState.CONNECTED, "websocket connecting")) {
+                    return false;
+                }
+                this.socket.send(message);
+                return true;
+            };
+            Connection.prototype.close = function () {
+                if (this.socket !== null) {
+                    this.socket.close();
+                    this.socket = null;
+                }
+                this.clearTimeOut();
+                this.connectionState = ConnectionState.CLOSED;
+            };
+            Connection.prototype.reconnect = function () {
+                this.close();
+                this.socket = this.createSocket();
+                this.timeoutId = this.setTimeOut();
+            };
+            Connection.prototype.clearTimeOut = function () {
+                this.timeoutId && clearTimeout(this.timeoutId);
+                this.timeoutId = 0;
+            };
+            Connection.prototype.setTimeOut = function (time) {
+                var _this = this;
+                if (time === void 0) { time = 3; }
+                // 清理timeout
+                this.clearTimeOut();
+                var timeout = setTimeout(function () {
+                    if (_this.socket.readyState !== WebSocket.OPEN) {
+                        _this.close();
+                        _this.onConnectionClosed(null);
+                    }
+                }, time);
+                return timeout;
+            };
+            Connection.prototype.onConnectionCreated = function (event) {
+                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTING, "connection state not CONNECTING");
+                this.connectionState = ConnectionState.CONNECTED;
+                this.clearTimeOut();
+                if (this.handler) {
+                    this.handler.onConnectionCreated(event);
+                }
+                // broadcast connection created
+                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CREATED);
+            };
+            Connection.prototype.onConnectionClosed = function (event) {
+                if (this.connectionState == ConnectionState.CLOSED) {
+                    return;
+                }
+                this.close();
+                if (this.handler) {
+                    this.handler.onConnectionClosed(event);
+                }
+                // broadcast connection closed
+                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CLOSED);
+            };
+            Connection.prototype.onConnectionError = function (err) {
+                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTED, "connection state not CONNECTED");
+                if (this.connectionState == ConnectionState.CLOSED) {
+                    return;
+                }
+                this.close();
+                if (this.handler) {
+                    this.handler.onConnectionError(event);
+                }
+                // broadcast connection error
+                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_ERROR);
+            };
+            Connection.prototype.onMessage = function (data) {
+                // TODO: decode data, and broadcast by id
+                // var dataView = new DataView(data);
+                // var length = dataView.getInt32(0, false);
+                // var id = dataView.getInt32(4, false);
+                // var command = dataView.getInt16(8, false);
+                // // console.info(length, id, command);
+                // var buffer =  new Uint8Array(length - 6) 
+                // for(var i = 0; i < length - 6; i++) {
+                //     buffer[i] = dataView.getInt8(i + 8);
+                // }
+            };
+            return Connection;
+        }());
+        net.Connection = Connection;
+    })(net = ninlgde.net || (ninlgde.net = {}));
+})(ninlgde || (ninlgde = {}));
+// module ninlgde.net {
+//     export class Connector implements IConnector {
+//     }
+// } 
+// module ninlgde.net {
+//     export interface IConnector {
+//         dispose()
+//         connect(url)
+//         onConnectionCreated()
+//         onConnectionLost(err)
+//         reconnect()
+//     }
+// } 
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var LAYOUR;
+    (function (LAYOUR) {
+        LAYOUR[LAYOUR["SENCE"] = 0] = "SENCE";
+        LAYOUR[LAYOUR["WINDOW"] = 1] = "WINDOW";
+        LAYOUR[LAYOUR["TOP"] = 2] = "TOP";
+        LAYOUR[LAYOUR["DEBUG"] = 3] = "DEBUG";
+    })(LAYOUR || (LAYOUR = {}));
+    var UIManager = (function () {
+        function UIManager() {
+            this.uiLayouts = null;
+            this.conf = null;
+        }
+        UIManager.getInstance = function () {
+            return this.instance;
+        };
+        UIManager.create = function () {
+            if (ninlgde.Assert.isFalse(this.instance == null)) {
+                this.instance = new UIManager();
+            }
+            return true;
+        };
+        UIManager.prototype.setLayouts = function (uiLayouts) {
+            this.uiLayouts = uiLayouts;
+        };
+        UIManager.prototype.loadConf = function (conf) {
+            this.conf = conf;
+        };
+        return UIManager;
+    }());
+    UIManager.instance = null;
+    ninlgde.UIManager = UIManager;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
     var datastruct;
     (function (datastruct) {
         /**
@@ -184,539 +476,6 @@ var ninlgde;
     Events.CONNECTION_ERROR = "CONNECTION_ERROR";
     Events.CONNECTION_MESSAGE = "CONNECTION_MESSAGE";
     ninlgde.Events = Events;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var EventCenter = (function () {
-        function EventCenter() {
-            this._TAG = "EventCenter";
-            this.eventMap = null; //
-            this.eventMap = new ninlgde.datastruct.HashMap();
-        }
-        EventCenter.getInstance = function () {
-            if (this.instance == null) {
-                this.instance = new EventCenter();
-            }
-            return this.instance;
-        };
-        EventCenter.prototype.fireEvent = function (event) {
-            var args = [];
-            for (var _i = 1; _i < arguments.length; _i++) {
-                args[_i - 1] = arguments[_i];
-            }
-            var events = this.eventMap.get(event);
-            if (events != null) {
-                events.forEach(function (e) {
-                    if (e) {
-                        e.getHandler().apply(e.getScope(), args);
-                    }
-                });
-            }
-        };
-        EventCenter.prototype.registEventListener = function (event, handler, scope) {
-            if (typeof event != "string" || typeof handler != "function") {
-                ninlgde.log.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler);
-                return;
-            }
-            var events = this.eventMap.get(event);
-            if (events == null) {
-                events = new Array();
-                this.eventMap.put(event, events);
-            }
-            var listener = new ninlgde.EventListener(handler, scope);
-            events.push(listener);
-        };
-        EventCenter.prototype.unregistEventListener = function (event, handler, scope) {
-            var events = this.eventMap.get(event);
-            if (events == null) {
-                return;
-            }
-            var newEvents = events.filter(function (e) {
-                return e.getHandler() != handler || e.getScope() != scope;
-            });
-            this.eventMap.put(event, newEvents);
-            events = null;
-        };
-        EventCenter.prototype.unregistScope = function (scope) {
-            var _this = this;
-            this.eventMap.forEach(function (event, events) {
-                var newEvents = events.filter(function (e) {
-                    return e.getScope() != scope;
-                });
-                _this.eventMap.put(event, newEvents);
-            });
-        };
-        return EventCenter;
-    }());
-    ninlgde.EventCenter = EventCenter;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var EventListener = (function () {
-        function EventListener(handler, scope) {
-            this.handler = handler;
-            this.scope = scope;
-        }
-        EventListener.prototype.getScope = function () {
-            return this.scope;
-        };
-        EventListener.prototype.getHandler = function () {
-            return this.handler;
-        };
-        return EventListener;
-    }());
-    ninlgde.EventListener = EventListener;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    var net;
-    (function (net) {
-        "use strict";
-    })(net = ninlgde.net || (ninlgde.net = {}));
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var Assert = (function () {
-        function Assert() {
-        }
-        /**
-         * 不该是true
-         * @param tf
-         * @param msg
-         */
-        Assert.isTrue = function (tf, msg) {
-            Assert.log(!tf, msg);
-            return tf;
-        };
-        /**
-         * 不该是false
-         * @param tf
-         * @param msg
-         */
-        Assert.isFalse = function (tf, msg) {
-            Assert.log(tf, msg);
-            return tf;
-        };
-        Assert.log = function (tf, msg) {
-            if (tf) {
-                return;
-            }
-            ninlgde.log.error("ASSERT FAILED!", msg ? "message: " + msg : "");
-        };
-        return Assert;
-    }());
-    ninlgde.Assert = Assert;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    var net;
-    (function (net) {
-        "use strict";
-    })(net = ninlgde.net || (ninlgde.net = {}));
-})(ninlgde || (ninlgde = {}));
-///<reference path='../../utils/Assert.ts' />
-///<reference path='IConnectionHandler.ts' />
-var ninlgde;
-(function (ninlgde) {
-    var net;
-    (function (net) {
-        "use strict";
-        var ConnectionState;
-        (function (ConnectionState) {
-            ConnectionState[ConnectionState["CLOSED"] = 0] = "CLOSED";
-            ConnectionState[ConnectionState["CONNECTING"] = 1] = "CONNECTING";
-            ConnectionState[ConnectionState["CONNECTED"] = 2] = "CONNECTED";
-        })(ConnectionState || (ConnectionState = {}));
-        var Connection = (function () {
-            function Connection(handler) {
-                this.socket = null;
-                this.connectionState = ConnectionState.CLOSED;
-                this.timeoutId = 0;
-                this.url = "";
-                this.handler = handler;
-            }
-            Connection.prototype.createSocket = function () {
-                var _this = this;
-                var socket = new WebSocket(this.url);
-                socket.binaryType = 'arraybuffer';
-                socket.onopen = function (event) {
-                    if (_this.onConnectionCreated) {
-                        _this.onConnectionCreated(event);
-                    }
-                };
-                socket.onmessage = function (event) {
-                    if (_this.onMessage) {
-                        _this.onMessage(event);
-                    }
-                };
-                socket.onerror = function (event) {
-                    if (_this.onConnectionError) {
-                        _this.onConnectionError(event);
-                    }
-                };
-                socket.onclose = function (event) {
-                    if (_this.onConnectionClosed) {
-                        _this.onConnectionClosed(event);
-                    }
-                };
-                return socket;
-            };
-            Connection.prototype.connection = function (url) {
-                ninlgde.Assert.isFalse(this.socket == null, "websocket should be null");
-                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CLOSED, "connection state should be closed");
-                ninlgde.Assert.isTrue(url === "", "url error");
-                this.url = url;
-                this.socket = this.createSocket();
-                this.timeoutId = this.setTimeOut();
-                return true;
-            };
-            Connection.prototype.send = function (message) {
-                if (ninlgde.Assert.isTrue(this.socket == null, "websocket is null")) {
-                    return false;
-                }
-                if (ninlgde.Assert.isTrue(this.connectionState != ConnectionState.CONNECTED, "websocket connecting")) {
-                    return false;
-                }
-                this.socket.send(message);
-                return true;
-            };
-            Connection.prototype.close = function () {
-                if (this.socket !== null) {
-                    this.socket.close();
-                    this.socket = null;
-                }
-                this.clearTimeOut();
-                this.connectionState = ConnectionState.CLOSED;
-            };
-            Connection.prototype.reconnect = function () {
-                this.close();
-                this.socket = this.createSocket();
-                this.timeoutId = this.setTimeOut();
-            };
-            Connection.prototype.clearTimeOut = function () {
-                this.timeoutId && clearTimeout(this.timeoutId);
-                this.timeoutId = 0;
-            };
-            Connection.prototype.setTimeOut = function (time) {
-                var _this = this;
-                if (time === void 0) { time = 3; }
-                // 清理timeout
-                this.clearTimeOut();
-                var timeout = setTimeout(function () {
-                    if (_this.socket.readyState !== WebSocket.OPEN) {
-                        _this.close();
-                        _this.onConnectionClosed(null);
-                    }
-                }, time);
-                return timeout;
-            };
-            Connection.prototype.onConnectionCreated = function (event) {
-                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTING, "connection state not CONNECTING");
-                this.connectionState = ConnectionState.CONNECTED;
-                this.clearTimeOut();
-                if (this.handler) {
-                    this.handler.onConnectionCreated(event);
-                }
-                // broadcast connection created
-                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CREATED);
-            };
-            Connection.prototype.onConnectionClosed = function (event) {
-                if (this.connectionState == ConnectionState.CLOSED) {
-                    return;
-                }
-                this.close();
-                if (this.handler) {
-                    this.handler.onConnectionClosed(event);
-                }
-                // broadcast connection closed
-                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CLOSED);
-            };
-            Connection.prototype.onConnectionError = function (err) {
-                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTED, "connection state not CONNECTED");
-                if (this.connectionState == ConnectionState.CLOSED) {
-                    return;
-                }
-                this.close();
-                if (this.handler) {
-                    this.handler.onConnectionError(event);
-                }
-                // broadcast connection error
-                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_ERROR);
-            };
-            Connection.prototype.onMessage = function (data) {
-                // TODO: decode data, and broadcast by id
-                // var dataView = new DataView(data);
-                // var length = dataView.getInt32(0, false);
-                // var id = dataView.getInt32(4, false);
-                // var command = dataView.getInt16(8, false);
-                // // console.info(length, id, command);
-                // var buffer =  new Uint8Array(length - 6) 
-                // for(var i = 0; i < length - 6; i++) {
-                //     buffer[i] = dataView.getInt8(i + 8);
-                // }
-            };
-            return Connection;
-        }());
-        net.Connection = Connection;
-    })(net = ninlgde.net || (ninlgde.net = {}));
-})(ninlgde || (ninlgde = {}));
-// module ninlgde.net {
-//     export class Connector implements IConnector {
-//     }
-// } 
-// module ninlgde.net {
-//     export interface IConnector {
-//         dispose()
-//         connect(url)
-//         onConnectionCreated()
-//         onConnectionLost(err)
-//         reconnect()
-//     }
-// } 
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    // 框架的log
-    ninlgde.log = null;
-    // pureMVC 的入口
-    ninlgde.app = null;
-    var GameFrame = (function () {
-        function GameFrame(game) {
-            this._TAG = "GameFrame";
-            this.GAME_NAME = null;
-            this.GAME_NAME = game;
-        }
-        GameFrame.create = function (game) {
-            if (GameFrame.instance != null) {
-                return false;
-            }
-            GameFrame.instance = new GameFrame(game);
-            GameFrame.instance.init();
-            return true;
-        };
-        GameFrame.getInstance = function () {
-            return GameFrame.instance;
-        };
-        GameFrame.prototype.init = function () {
-            // 初始化框架log
-            ninlgde.log = new ninlgde.Logger(7);
-            // 初始化pureMVC
-            ninlgde.app = puremvc.Facade.getInstance(this.GAME_NAME);
-            ninlgde.log.info(this._TAG, "{0} is a {1} log", "This", "test");
-        };
-        GameFrame.prototype.getGameName = function () {
-            return this.GAME_NAME;
-        };
-        return GameFrame;
-    }());
-    GameFrame.instance = null;
-    ninlgde.GameFrame = GameFrame;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var Utils = (function () {
-        function Utils() {
-        }
-        Utils.StringFormat = function (fmt) {
-            var args = [];
-            for (var _i = 1; _i < arguments.length; _i++) {
-                args[_i - 1] = arguments[_i];
-            }
-            if (args.length > 0) {
-                if (args.length == 1 && typeof (args) == "object") {
-                    for (var key in args) {
-                        if (args[key] != undefined) {
-                            var reg = new RegExp("\\{" + key + "\\}", "gm");
-                            fmt = fmt.replace(reg, args[key]);
-                        }
-                    }
-                }
-                else {
-                    for (var i = 0; i < args.length; i++) {
-                        if (args[i] != undefined) {
-                            var reg = new RegExp("\\{" + i + "\\}", "gm");
-                            fmt = fmt.replace(reg, args[i]);
-                        }
-                    }
-                }
-            }
-            return fmt;
-        };
-        Utils.DateFormat = function (date, fmt) {
-            var o = {
-                "M+": date.getMonth() + 1,
-                "d+": date.getDate(),
-                "h+": date.getHours(),
-                "m+": date.getMinutes(),
-                "s+": date.getSeconds(),
-                "q+": Math.floor((date.getMonth() + 3) / 3),
-                "S": date.getMilliseconds() //毫秒
-            };
-            if (/(y+)/.test(fmt)) {
-                fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
-            }
-            for (var k in o) {
-                if (new RegExp("(" + k + ")").test(fmt)) {
-                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
-                }
-            }
-            return fmt;
-        };
-        return Utils;
-    }());
-    ninlgde.Utils = Utils;
-})(ninlgde || (ninlgde = {}));
-///<reference path='extendsTS.ts' />
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var LoggerLevel;
-    (function (LoggerLevel) {
-        LoggerLevel[LoggerLevel["NONE"] = 0] = "NONE";
-        LoggerLevel[LoggerLevel["ERROR"] = 1] = "ERROR";
-        LoggerLevel[LoggerLevel["WARN"] = 2] = "WARN";
-        LoggerLevel[LoggerLevel["INFO"] = 3] = "INFO";
-        LoggerLevel[LoggerLevel["DEBUG"] = 4] = "DEBUG";
-        LoggerLevel[LoggerLevel["count"] = 5] = "count";
-    })(LoggerLevel = ninlgde.LoggerLevel || (ninlgde.LoggerLevel = {}));
-    var LEVEL_STR = ["", "ERROR", "WARN", "INFO", "DEBUG"];
-    var Logger = (function () {
-        /**
-         * 初始化日志和所属模块
-         * @param level
-         * @param themodule
-         */
-        function Logger(level, themodule) {
-            if (themodule === void 0) { themodule = "FRAME"; }
-            /**
-             * 1 1 1 1 = 15
-             * ^ ^ ^ ^
-             * | | | |
-             * | | | +--- error 是否输出
-             * | | +----- warn 是否输出
-             * | +------- info 是否输出
-             * +--------- debug 是否输出
-             */
-            this.level = 0;
-            this.themodule = "";
-            this.level = level;
-            this.themodule = themodule;
-        }
-        Logger.prototype.print = function (level, tag, format) {
-            var args = [];
-            for (var _i = 3; _i < arguments.length; _i++) {
-                args[_i - 3] = arguments[_i];
-            }
-            var levelStr = LEVEL_STR[level];
-            var content = args.length == 0 ? format : ninlgde.Utils.StringFormat.apply(null, [format].concat(args));
-            var time = ninlgde.Utils.DateFormat(new Date(), "MM-dd hh:mm:ss.S");
-            var totalFrames = cc.director.getTotalFrames();
-            var result = ninlgde.Utils.StringFormat("[NINLGDE LOG][{0}--{1}]==[{2}]=>[TAG:{3}][{4}] {5}", time, totalFrames, this.themodule, tag, levelStr, content);
-            cc.log(result);
-        };
-        Logger.prototype.error = function (tag, format) {
-            var args = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                args[_i - 2] = arguments[_i];
-            }
-            if ((this.level & 1 << LoggerLevel.ERROR) == 0) {
-                this.print.apply(this, [LoggerLevel.ERROR, tag, format].concat(args));
-            }
-        };
-        Logger.prototype.warn = function (tag, format) {
-            var args = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                args[_i - 2] = arguments[_i];
-            }
-            if ((this.level & 1 << LoggerLevel.WARN) == 0) {
-                this.print.apply(this, [LoggerLevel.WARN, tag, format].concat(args));
-            }
-        };
-        Logger.prototype.info = function (tag, format) {
-            var args = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                args[_i - 2] = arguments[_i];
-            }
-            if ((this.level & 1 << LoggerLevel.INFO) == 0) {
-                this.print.apply(this, [LoggerLevel.INFO, tag, format].concat(args));
-            }
-        };
-        Logger.prototype.debug = function (tag, format) {
-            var args = [];
-            for (var _i = 2; _i < arguments.length; _i++) {
-                args[_i - 2] = arguments[_i];
-            }
-            if ((this.level & 1 << LoggerLevel.DEBUG) == 0) {
-                this.print.apply(this, [LoggerLevel.DEBUG, tag, format].concat(args));
-            }
-        };
-        return Logger;
-    }());
-    ninlgde.Logger = Logger;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var ObjcetPool = (function () {
-        function ObjcetPool() {
-        }
-        return ObjcetPool;
-    }());
-    ninlgde.ObjcetPool = ObjcetPool;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-})(ninlgde || (ninlgde = {}));
-///<reference path='IState.ts'/>
-///<reference path='IStateMachine.ts'/>
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var State = (function () {
-        function State(stateId) {
-            this._TAG = "State";
-            // private static instance = null
-            this.stateId = 0;
-            this.generalCondition = null;
-            this.stateId = stateId;
-            this.generalCondition = [];
-            // todo: log
-        }
-        State.prototype.init = function () {
-            // todo: log
-        };
-        State.prototype.enter = function (machine) {
-            // todo: log
-        };
-        State.prototype.exit = function (machine) {
-            // todo: log
-        };
-        State.prototype.update = function (machine) {
-        };
-        State.prototype.getStateID = function () {
-            return this.stateId;
-        };
-        // getSingleton(): IState {
-        // }
-        State.prototype.generalCheck = function (machine) {
-            this.generalCondition.forEach(function (g) {
-                var next = g(machine);
-                return next || null;
-            });
-            return null;
-        };
-        return State;
-    }());
-    ninlgde.State = State;
 })(ninlgde || (ninlgde = {}));
 ///<reference path='../../../../../org/puremvc/typescript/multicore/interfaces/INotifier.ts'/>
 ///<reference path='../../../../../org/puremvc/typescript/multicore/interfaces/INotification.ts'/>
@@ -2023,6 +1782,296 @@ var puremvc;
     Facade.instanceMap = {};
     puremvc.Facade = Facade;
 })(puremvc || (puremvc = {}));
+///<reference path='../../../org/puremvc/typescript/multicore/patterns/facade/Facade.ts'/>
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    // 框架的log
+    ninlgde.log = null;
+    // pureMVC 的入口
+    ninlgde.app = null;
+    var GameFrame = (function () {
+        function GameFrame(game) {
+            this._TAG = "GameFrame";
+            this.GAME_NAME = null;
+            this.GAME_NAME = game;
+        }
+        GameFrame.create = function (game) {
+            if (GameFrame.instance != null) {
+                return false;
+            }
+            GameFrame.instance = new GameFrame(game);
+            GameFrame.instance.init();
+            return true;
+        };
+        GameFrame.getInstance = function () {
+            return GameFrame.instance;
+        };
+        /**
+         * frame初始化
+         * 初始化所有不需要coocs支持的模块
+         */
+        GameFrame.prototype.init = function () {
+            // 初始化框架log
+            ninlgde.log = new ninlgde.Logger(7);
+            // 初始化pureMVC
+            ninlgde.app = puremvc.Facade.getInstance(this.GAME_NAME);
+            // 创建UImanager
+            ninlgde.UIManager.create();
+            ninlgde.log.info(this._TAG, "Ninlgde Framework has initialized");
+        };
+        /**
+         * frame start
+         * GameMain的start里调用，用于启动framework
+         */
+        GameFrame.prototype.start = function () {
+            return true;
+        };
+        GameFrame.prototype.getGameName = function () {
+            return this.GAME_NAME;
+        };
+        return GameFrame;
+    }());
+    GameFrame.instance = null;
+    ninlgde.GameFrame = GameFrame;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var Assert = (function () {
+        function Assert() {
+        }
+        /**
+         * 不该是true
+         * @param tf
+         * @param msg
+         */
+        Assert.isTrue = function (tf, msg) {
+            Assert.log(!tf, msg);
+            return tf;
+        };
+        /**
+         * 不该是false
+         * @param tf
+         * @param msg
+         */
+        Assert.isFalse = function (tf, msg) {
+            Assert.log(tf, msg);
+            return tf;
+        };
+        Assert.log = function (tf, msg) {
+            if (tf) {
+                return;
+            }
+            ninlgde.log.error("ASSERT FAILED!", msg ? "message: " + msg : "");
+        };
+        return Assert;
+    }());
+    ninlgde.Assert = Assert;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var Utils = (function () {
+        function Utils() {
+        }
+        Utils.StringFormat = function (fmt) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+            if (args.length > 0) {
+                if (args.length == 1 && typeof (args) == "object") {
+                    for (var key in args) {
+                        if (args[key] != undefined) {
+                            var reg = new RegExp("\\{" + key + "\\}", "gm");
+                            fmt = fmt.replace(reg, args[key]);
+                        }
+                    }
+                }
+                else {
+                    for (var i = 0; i < args.length; i++) {
+                        if (args[i] != undefined) {
+                            var reg = new RegExp("\\{" + i + "\\}", "gm");
+                            fmt = fmt.replace(reg, args[i]);
+                        }
+                    }
+                }
+            }
+            return fmt;
+        };
+        Utils.DateFormat = function (date, fmt) {
+            var o = {
+                "M+": date.getMonth() + 1,
+                "d+": date.getDate(),
+                "h+": date.getHours(),
+                "m+": date.getMinutes(),
+                "s+": date.getSeconds(),
+                "q+": Math.floor((date.getMonth() + 3) / 3),
+                "S": date.getMilliseconds() //毫秒
+            };
+            if (/(y+)/.test(fmt)) {
+                fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length));
+            }
+            for (var k in o) {
+                if (new RegExp("(" + k + ")").test(fmt)) {
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+                }
+            }
+            return fmt;
+        };
+        return Utils;
+    }());
+    ninlgde.Utils = Utils;
+})(ninlgde || (ninlgde = {}));
+///<reference path='extendsTS.ts' />
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var LoggerLevel;
+    (function (LoggerLevel) {
+        LoggerLevel[LoggerLevel["NONE"] = 0] = "NONE";
+        LoggerLevel[LoggerLevel["ERROR"] = 1] = "ERROR";
+        LoggerLevel[LoggerLevel["WARN"] = 2] = "WARN";
+        LoggerLevel[LoggerLevel["INFO"] = 3] = "INFO";
+        LoggerLevel[LoggerLevel["DEBUG"] = 4] = "DEBUG";
+        LoggerLevel[LoggerLevel["count"] = 5] = "count";
+    })(LoggerLevel = ninlgde.LoggerLevel || (ninlgde.LoggerLevel = {}));
+    var LEVEL_STR = ["", "ERROR", "WARN", "INFO", "DEBUG"];
+    var Logger = (function () {
+        /**
+         * 初始化日志和所属模块
+         * @param level
+         * @param themodule
+         */
+        function Logger(level, themodule) {
+            if (themodule === void 0) { themodule = "FRAME"; }
+            /**
+             * 1 1 1 1 = 15
+             * ^ ^ ^ ^
+             * | | | |
+             * | | | +--- error 是否输出
+             * | | +----- warn 是否输出
+             * | +------- info 是否输出
+             * +--------- debug 是否输出
+             */
+            this.level = 0;
+            this.themodule = "";
+            this.level = level;
+            this.themodule = themodule;
+        }
+        Logger.prototype.print = function (level, tag, format) {
+            var args = [];
+            for (var _i = 3; _i < arguments.length; _i++) {
+                args[_i - 3] = arguments[_i];
+            }
+            var levelStr = LEVEL_STR[level];
+            var content = args.length == 0 ? format : ninlgde.Utils.StringFormat.apply(null, [format].concat(args));
+            var time = ninlgde.Utils.DateFormat(new Date(), "MM-dd hh:mm:ss.S");
+            var totalFrames = cc.director.getTotalFrames();
+            var result = ninlgde.Utils.StringFormat("[NINLGDE LOG][{0}][{1}--{2}]=>[TAG:{3}][{4}] {5}", this.themodule, time, totalFrames, tag, levelStr, content);
+            cc.log(result);
+        };
+        Logger.prototype.error = function (tag, format) {
+            var args = [];
+            for (var _i = 2; _i < arguments.length; _i++) {
+                args[_i - 2] = arguments[_i];
+            }
+            if ((this.level & 1 << LoggerLevel.ERROR) == 0) {
+                this.print.apply(this, [LoggerLevel.ERROR, tag, format].concat(args));
+            }
+        };
+        Logger.prototype.warn = function (tag, format) {
+            var args = [];
+            for (var _i = 2; _i < arguments.length; _i++) {
+                args[_i - 2] = arguments[_i];
+            }
+            if ((this.level & 1 << LoggerLevel.WARN) == 0) {
+                this.print.apply(this, [LoggerLevel.WARN, tag, format].concat(args));
+            }
+        };
+        Logger.prototype.info = function (tag, format) {
+            var args = [];
+            for (var _i = 2; _i < arguments.length; _i++) {
+                args[_i - 2] = arguments[_i];
+            }
+            if ((this.level & 1 << LoggerLevel.INFO) == 0) {
+                this.print.apply(this, [LoggerLevel.INFO, tag, format].concat(args));
+            }
+        };
+        Logger.prototype.debug = function (tag, format) {
+            var args = [];
+            for (var _i = 2; _i < arguments.length; _i++) {
+                args[_i - 2] = arguments[_i];
+            }
+            if ((this.level & 1 << LoggerLevel.DEBUG) == 0) {
+                this.print.apply(this, [LoggerLevel.DEBUG, tag, format].concat(args));
+            }
+        };
+        return Logger;
+    }());
+    ninlgde.Logger = Logger;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var ObjcetPool = (function () {
+        function ObjcetPool() {
+        }
+        return ObjcetPool;
+    }());
+    ninlgde.ObjcetPool = ObjcetPool;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+})(ninlgde || (ninlgde = {}));
+///<reference path='IState.ts'/>
+///<reference path='IStateMachine.ts'/>
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var State = (function () {
+        function State(stateId) {
+            this._TAG = "State";
+            // private static instance = null
+            this.stateId = 0;
+            this.generalCondition = null;
+            this.stateId = stateId;
+            this.generalCondition = [];
+            // todo: log
+        }
+        State.prototype.init = function () {
+            // todo: log
+        };
+        State.prototype.enter = function (machine) {
+            // todo: log
+        };
+        State.prototype.exit = function (machine) {
+            // todo: log
+        };
+        State.prototype.update = function (machine) {
+        };
+        State.prototype.getStateID = function () {
+            return this.stateId;
+        };
+        // getSingleton(): IState {
+        // }
+        State.prototype.generalCheck = function (machine) {
+            this.generalCondition.forEach(function (g) {
+                var next = g(machine);
+                return next || null;
+            });
+            return null;
+        };
+        return State;
+    }());
+    ninlgde.State = State;
+})(ninlgde || (ninlgde = {}));
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/INotifier.ts'/>
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/IFacade.ts'/>
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/patterns/facade/Facade.ts'/>
@@ -2236,6 +2285,41 @@ var ninlgde;
     }());
     ninlgde.Timer = Timer;
 })(ninlgde || (ninlgde = {}));
+///<reference path='../frame/utils/Logger.ts'/>
+var ngame;
+(function (ngame) {
+    "use strict";
+    // game的log
+    ngame.log = null;
+    var NGame = (function () {
+        function NGame() {
+            this._TAG = "NGame";
+        }
+        NGame.create = function () {
+            if (NGame.instance != null) {
+                return false;
+            }
+            NGame.instance = new NGame();
+            NGame.instance.init();
+            return true;
+        };
+        NGame.getInstance = function () {
+            return NGame.instance;
+        };
+        /**
+         * frame初始化
+         * 初始化所有不需要coocs支持的模块
+         */
+        NGame.prototype.init = function () {
+            // 初始化框架log
+            ngame.log = new ninlgde.Logger(7, "NGAME");
+            ngame.log.info(this._TAG, "Ninlgde Game has initialized");
+        };
+        return NGame;
+    }());
+    NGame.instance = null;
+    ngame.NGame = NGame;
+})(ngame || (ngame = {}));
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/ICommand.ts'/>
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/INotifier.ts'/>
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/INotification.ts'/>

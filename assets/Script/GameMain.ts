@@ -5,6 +5,10 @@
  */
 const {ccclass, property} = cc._decorator;
 
+import {GameConfig} from './Config/GameConfig'
+
+export var UIManager = null
+
 @ccclass
 export default class GameMain extends cc.Component {
 
@@ -19,16 +23,31 @@ export default class GameMain extends cc.Component {
     @property(cc.Layout)
     debugLayout: cc.Layout = null
 
+    @property(GameConfig)
+    gameConfig: GameConfig
+
     constructor() {
         super()
     }
 
     start () {
+        this.gameConfig = new GameConfig()
+        // 创建游戏
+        ngame.NGame.create()
 
-        this.senceLayout;
-        this.windowLayout;
-        this.topLayout;
-        this.debugLayout;
+        // init layouts
+        let layouts = new Array<cc.Layout>()
+        layouts.push(this.senceLayout)
+        layouts.push(this.windowLayout)
+        layouts.push(this.topLayout)
+        layouts.push(this.debugLayout)
+        ninlgde.UIManager.getInstance().setLayouts(layouts)
+        // 设置ui配置
+        ninlgde.UIManager.getInstance().loadConf(this.gameConfig.UIConfig)
+        
+        // start ninlgde framework
+        ninlgde.GameFrame.getInstance().start()
+
         var that = this
 
         // let connect: WebSocket = new WebSocket("ws://127.0.0.1:8080/ws")

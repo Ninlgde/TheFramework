@@ -76,6 +76,9 @@
       },
       {
         "__id__": 16
+      },
+      {
+        "__id__": 17
       }
     ],
     "_prefab": null,
@@ -599,5 +602,15 @@
     "debugLayout": {
       "__id__": 14
     }
+  },
+  {
+    "__type__": "2b6d4ZHv4dKDJPIlD+2kydS",
+    "_name": "",
+    "_objFlags": 0,
+    "node": {
+      "__id__": 2
+    },
+    "_enabled": true,
+    "text": "hello"
   }
 ]
