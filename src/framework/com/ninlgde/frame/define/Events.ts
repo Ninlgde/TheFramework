@@ -1,10 +1,10 @@
 module ninlgde {
     "use strict";
     
-    export enum Events {
-        CONNECTION_CREATED = "CONNECTION_CREATED",
-        CONNECTION_CLOSED = "CONNECTION_CLOSED",
-        CONNECTION_ERROR = "CONNECTION_ERROR",
-        CONNECTION_MESSAGE = "CONNECTION_MESSAGE",
+    export class Events {
+        public static CONNECTION_CREATED:string = "CONNECTION_CREATED"
+        public static CONNECTION_CLOSED:string = "CONNECTION_CLOSED"
+        public static CONNECTION_ERROR:string = "CONNECTION_ERROR"
+        public static CONNECTION_MESSAGE:string = "CONNECTION_MESSAGE"
     }
 }

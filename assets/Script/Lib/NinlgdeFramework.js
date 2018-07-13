@@ -174,13 +174,16 @@ var ninlgde;
 var ninlgde;
 (function (ninlgde) {
     "use strict";
-    var Events;
-    (function (Events) {
-        Events[Events["CONNECTION_CREATED"] = "CONNECTION_CREATED"] = "CONNECTION_CREATED";
-        Events[Events["CONNECTION_CLOSED"] = "CONNECTION_CLOSED"] = "CONNECTION_CLOSED";
-        Events[Events["CONNECTION_ERROR"] = "CONNECTION_ERROR"] = "CONNECTION_ERROR";
-        Events[Events["CONNECTION_MESSAGE"] = "CONNECTION_MESSAGE"] = "CONNECTION_MESSAGE";
-    })(Events = ninlgde.Events || (ninlgde.Events = {}));
+    var Events = (function () {
+        function Events() {
+        }
+        return Events;
+    }());
+    Events.CONNECTION_CREATED = "CONNECTION_CREATED";
+    Events.CONNECTION_CLOSED = "CONNECTION_CLOSED";
+    Events.CONNECTION_ERROR = "CONNECTION_ERROR";
+    Events.CONNECTION_MESSAGE = "CONNECTION_MESSAGE";
+    ninlgde.Events = Events;
 })(ninlgde || (ninlgde = {}));
 var ninlgde;
 (function (ninlgde) {
