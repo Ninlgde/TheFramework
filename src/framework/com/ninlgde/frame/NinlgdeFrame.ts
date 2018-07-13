@@ -1,0 +1,49 @@
+module ninlgde {
+    "use strict";
+
+    // 框架的log
+    export var log: Logger = null
+
+    // pureMVC 的入口
+    export var app: puremvc.IFacade = null
+    
+    export class GameFrame {
+
+        private _TAG: string = "GameFrame"
+
+        private GAME_NAME: string = null
+
+        private static instance: GameFrame = null
+
+        private constructor(game) {
+            this.GAME_NAME = game
+        }
+
+        public static create(game): boolean {
+            if (GameFrame.instance != null) {
+                return false
+            }
+            GameFrame.instance = new GameFrame(game)
+            GameFrame.instance.init()
+            return true
+        }
+
+        public static getInstance(): GameFrame {
+            return GameFrame.instance
+        }
+
+        private init() {
+            // 初始化框架log
+            log = new Logger(7)
+
+            // 初始化pureMVC
+            app = puremvc.Facade.getInstance(this.GAME_NAME)
+
+            ninlgde.log.info(this._TAG, "{0} is a {1} log", "This", "test")
+        }
+
+        public getGameName(): string {
+            return this.GAME_NAME
+        }
+    }
+}
