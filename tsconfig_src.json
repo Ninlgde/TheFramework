@@ -3,9 +3,13 @@
     "module": "commonjs",
     "lib": [ "dom", "es5", "es2015.promise" ],
     "target": "es5",
+    "outFile": "./assets/Script/Lib/NinlgdeFramework.js",
     "experimentalDecorators": true,
     "skipLibCheck": true
   },
+  "include": [
+    "src"
+  ],
   "exclude": [
     "node_modules",
     "library",

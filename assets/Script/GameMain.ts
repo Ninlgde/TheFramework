@@ -24,7 +24,7 @@ export default class GameMain extends cc.Component {
     debugLayout: cc.Layout = null
 
     @property(GameConfig)
-    gameConfig: GameConfig
+    gameConfig: GameConfig = null
 
     constructor() {
         super()
@@ -48,7 +48,7 @@ export default class GameMain extends cc.Component {
         // start ninlgde framework
         ninlgde.GameFrame.getInstance().start()
 
-        var that = this
+        let a = true
 
         // let connect: WebSocket = new WebSocket("ws://127.0.0.1:8080/ws")
         
@@ -59,26 +59,38 @@ export default class GameMain extends cc.Component {
         // connect.onopen = function() {
         //     connect.send("（cocos）:hhhhhhhhhhh")
         // }
-        
-
+        var that = this
 
         var node = this.node
-        //加载预制资源 PrefabUrl为 预制资源在 资源中的路径
-        cc.loader.loadRes("Prefab/cocoslogo.prefab", function(errorMessage,loadedResource){//检查资源加载
-            if( errorMessage ) { 
-                cc.log( '载入预制资源失败, 原因:' + errorMessage ); 
-                return; 
-            }
-            if( !( loadedResource instanceof cc.Prefab ) ) { 
-                cc.log( '你载入的不是预制资源!' ); 
-                return; 
-            } 
+        new Promise((resolve, reject)=>{
+            //加载预制资源 PrefabUrl为 预制资源在 资源中的路径
+            cc.loader.loadRes("Prefab/cocoslogo.prefab", function(errorMessage,loadedResource){//检查资源加载
+                if( errorMessage ) { 
+                    cc.log( '载入预制资源失败, 原因:' + errorMessage ); 
+                    reject(1)
+                    return
+                }
+                if( !( loadedResource instanceof cc.Prefab ) ) { 
+                    cc.log( '你载入的不是预制资源!' ); 
+                    reject(2)
+                    return
+                } 
+                resolve(loadedResource)
+            });
+        }).then((loadedResource: any)=> {
             //开始实例化预制资源
             var TipBoxPrefab = cc.instantiate(loadedResource);
-        
             //将预制资源添加到父节点
              node.addChild(TipBoxPrefab);
-        });
+        }).catch((reason)=>{
+            if (reason == 1) {
+                cc.log("hhhhhh")
+            } else if (reason == 2) {
+                cc.log("131231")
+            } else {
+                cc.log("abdcccc")
+            }
+        })
 
     }
 }

@@ -19,7 +19,7 @@ export class GameConfig extends cc.Component {
     public text: string = 'hello';
 
     @property(UIConfig)
-    private uiconfig: UIConfig
+    private uiconfig: UIConfig = null
 
     public get UIConfig() {
         if (this.uiconfig == null) {
