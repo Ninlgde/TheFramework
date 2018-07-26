@@ -4,7 +4,7 @@ module ninlgde {
     "use strict";
 
     // 框架的log
-    export var log: Logger = null
+    export var logger: Logger = null
 
     // pureMVC 的入口
     export var app: puremvc.IFacade = null
@@ -40,13 +40,13 @@ module ninlgde {
          */
         private init() {
             // 初始化框架log
-            log = new Logger(7)
+            logger = new Logger(7)
             // 初始化pureMVC
             app = puremvc.Facade.getInstance(this.GAME_NAME)
             // 创建UImanager
             UIManager.create()
 
-            ninlgde.log.info(this._TAG, "Ninlgde Framework has initialized")
+            ninlgde.logger.info(this._TAG, "Ninlgde Framework has initialized")
         }
 
         /**

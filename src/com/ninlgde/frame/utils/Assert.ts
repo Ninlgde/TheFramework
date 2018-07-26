@@ -27,7 +27,7 @@ module ninlgde {
                 return
             }
 
-            ninlgde.log.error("ASSERT FAILED!", msg ? `message: ${msg}` : "")
+            ninlgde.logger.error("ASSERT FAILED!", msg ? `message: ${msg}` : "")
         }
     }
 }

@@ -34,7 +34,7 @@ var ninlgde;
         };
         EventCenter.prototype.registEventListener = function (event, handler, scope) {
             if (typeof event != "string" || typeof handler != "function") {
-                ninlgde.log.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler);
+                log.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler);
                 return;
             }
             var events = this.eventMap.get(event);
@@ -1787,7 +1787,7 @@ var ninlgde;
 (function (ninlgde) {
     "use strict";
     // 框架的log
-    ninlgde.log = null;
+    ninlgde.logger = null;
     // pureMVC 的入口
     ninlgde.app = null;
     var GameFrame = (function () {
@@ -1813,12 +1813,12 @@ var ninlgde;
          */
         GameFrame.prototype.init = function () {
             // 初始化框架log
-            ninlgde.log = new ninlgde.Logger(7);
+            ninlgde.logger = new ninlgde.Logger(7);
             // 初始化pureMVC
             ninlgde.app = puremvc.Facade.getInstance(this.GAME_NAME);
             // 创建UImanager
             ninlgde.UIManager.create();
-            ninlgde.log.info(this._TAG, "Ninlgde Framework has initialized");
+            ninlgde.logger.info(this._TAG, "Ninlgde Framework has initialized");
         };
         /**
          * frame start
@@ -1863,7 +1863,7 @@ var ninlgde;
             if (tf) {
                 return;
             }
-            ninlgde.log.error("ASSERT FAILED!", msg ? "message: " + msg : "");
+            ninlgde.logger.error("ASSERT FAILED!", msg ? "message: " + msg : "");
         };
         return Assert;
     }());
