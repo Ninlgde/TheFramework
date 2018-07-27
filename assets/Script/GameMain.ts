@@ -52,7 +52,7 @@ export default class GameMain extends cc.Component {
 
         new Promise((resolve, rejecct)=> {
             ninlgde.logger.info(this._TAG, ''+1)
-            // resolve()
+            resolve()
             ninlgde.logger.info(this._TAG, ''+2)
             rejecct()
             ninlgde.logger.info(this._TAG, ''+3)
