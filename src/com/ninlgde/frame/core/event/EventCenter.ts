@@ -5,12 +5,12 @@ module ninlgde {
 
         _TAG: string = "EventCenter"
 
-        private eventMap: datastruct.Map<string, Array<IEventListener>> = null//
+        private eventMap: collection.Map<string, Array<IEventListener>> = null//
 
         private static instance: EventCenter
 
         private constructor() {
-            this.eventMap = new datastruct.HashMap<string, Array<IEventListener>>()
+            this.eventMap = new collection.HashMap<string, Array<IEventListener>>()
         }
 
         public static getInstance(): EventCenter {

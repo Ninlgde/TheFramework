@@ -27,20 +27,20 @@ module ninlgde {
     // }
 
     export class Timer {
-        // private static timerMap: datastruct.Map<any, datastruct.OrderedMap<any, TimerCallback>>
+        // private static timerMap: collection.Map<any, collection.OrderedMap<any, TimerCallback>>
 
         // private static checkMap() {
         //     if (this.timerMap != null) {
         //         return
         //     }
-        //     this.timerMap = new datastruct.OrderedMap<any, datastruct.OrderedMap<any, TimerCallback>>()
+        //     this.timerMap = new collection.OrderedMap<any, collection.OrderedMap<any, TimerCallback>>()
         // }
 
         // private static getCallbacks(scope) {
         //     this.checkMap()
         //     let callbacks = this.timerMap.get(scope)
         //     if (callbacks == null) {
-        //         callbacks = new datastruct.OrderedMap<any, TimerCallback>()
+        //         callbacks = new collection.OrderedMap<any, TimerCallback>()
         //         this.timerMap.put(scope, callbacks)
         //     }
 

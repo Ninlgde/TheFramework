@@ -1,4 +1,4 @@
-module ninlgde.datastruct {
+module ninlgde.collection {
     /**
      * Map接口
      */
