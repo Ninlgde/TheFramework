@@ -3,7 +3,7 @@ module ngame {
     "use strict";
 
     // game的log
-    export var log: ninlgde.Logger = null
+    export var logger: ninlgde.Logger = null
 
     export class NGame {
 
@@ -33,9 +33,9 @@ module ngame {
          */
         private init() {
             // 初始化框架log
-            log = new ninlgde.Logger(7, "NGAME")
+            logger = new ninlgde.Logger(7, "NGAME")
 
-            log.info(this._TAG, "Ninlgde Game has initialized")
+            logger.info(this._TAG, "Ninlgde Game has initialized")
         }
 
     }

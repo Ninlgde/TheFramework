@@ -33,7 +33,7 @@ module ninlgde {
 
         public registEventListener(event: string, handler: any, scope: any) {
             if (typeof event != "string" || typeof handler != "function") {
-                log.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler)
+                logger.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler)
                 return
             }
             let events: Array<IEventListener> = this.eventMap.get(event)
