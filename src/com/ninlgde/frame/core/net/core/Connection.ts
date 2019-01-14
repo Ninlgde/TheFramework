@@ -1,4 +1,4 @@
-///<reference path='../../utils/Assert.ts' />
+///<reference path='../../../utils/Assert.ts' />
 ///<reference path='IConnectionHandler.ts' />
 
 module ninlgde.net {

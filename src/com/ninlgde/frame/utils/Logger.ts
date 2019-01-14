@@ -49,7 +49,7 @@ module ninlgde {
 
             let result: string = Utils.StringFormat("[NINLGDE LOG][{0}][{1}--{2}]=>[TAG:{3}][{4}] {5}", 
                                                     this.themodule, time, totalFrames, tag, levelStr, content)
-            cc.log(result)
+            console.log(result)
         }
 
         public error(tag: string, format: string, ...args:any[]): void {

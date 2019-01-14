@@ -1,6 +1,6 @@
 ///<reference path='IState.ts'/>
 ///<reference path='IStateMachine.ts'/>
-///<reference path="../../../../../org/puremvc/typescript/multicore/patterns/observer/Notifier"/>
+///<reference path="../../../../../org/puremvc/typescript/multicore/patterns/observer/Notifier.ts"/>
 
 module ninlgde {
     "use strict"
