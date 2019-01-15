@@ -44,7 +44,7 @@ module ninlgde {
             // 初始化pureMVC
             app = puremvc.Facade.getInstance(this.GAME_NAME)
             // 创建UImanager
-            UIManager.create()
+            ui.UIManager.create()
 
             ninlgde.logger.info(this._TAG, "Ninlgde Framework has initialized")
         }

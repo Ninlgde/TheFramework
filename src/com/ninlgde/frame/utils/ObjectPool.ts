@@ -1,7 +1,7 @@
 module ninlgde {
     "use strict"
 
-    export class ObjcetPool {
+    export class ObjectPool {
         
     }
 }

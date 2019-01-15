@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "amd",
     "lib": [ "dom", "es5", "es2015.promise" ],
     "target": "es5",
     "outFile": "./assets/Script/Lib/NinlgdeFramework.js",

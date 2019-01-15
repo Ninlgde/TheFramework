@@ -1,482 +1,16 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
-var ninlgde;
-(function (ninlgde) {
-    var collection;
-    (function (collection) {
-        /**
-         * HashMap
-         * key不能是object，否则会出问题
-         */
-        var HashMap = (function () {
-            function HashMap() {
-                this.len = 0;
-                this.obj = new Object();
-            }
-            HashMap.prototype.isEmpty = function () {
-                return this.len == 0;
-            };
-            HashMap.prototype.containsKey = function (key) {
-                return (key in this.obj);
-            };
-            HashMap.prototype.get = function (key) {
-                return this.containsKey(key) ? this.obj[key] : null;
-            };
-            HashMap.prototype.put = function (key, value) {
-                if (!this.containsKey(key)) {
-                    this.len++;
-                }
-                this.obj[key] = value;
-                return this;
-            };
-            HashMap.prototype.delete = function (key) {
-                if (this.containsKey(key) && (delete this.obj[key])) {
-                    this.len--;
-                    return true;
-                }
-                return false;
-            };
-            HashMap.prototype.clear = function () {
-                this.len = 0;
-                this.obj = new Object();
-            };
-            HashMap.prototype.forEach = function (callbackfn) {
-                var keys = this.keySet();
-                for (var i = 0; i < this.len; i++) {
-                    var key = keys[i];
-                    callbackfn(key, this.obj[key], this);
-                }
-            };
-            HashMap.prototype.keySet = function () {
-                var keys = new Array();
-                for (var key in this.obj) {
-                    keys.push(key);
-                }
-                return keys;
-            };
-            HashMap.prototype.valueList = function () {
-                var values = new Array();
-                for (var key in this.obj) {
-                    values.push(this.obj[key]);
-                }
-                return values;
-            };
-            HashMap.prototype.keys = function () {
-                return new MapIterator(this.keySet());
-            };
-            HashMap.prototype.values = function () {
-                return new MapIterator(this.valueList());
-            };
-            HashMap.prototype.size = function () {
-                return this.len;
-            };
-            return HashMap;
-        }());
-        collection.HashMap = HashMap;
-        /**
-         *  OrderedMap
-         */
-        var OrderedMap = (function () {
-            function OrderedMap() {
-                this.keyEles = [];
-                this.elements = [];
-            }
-            OrderedMap.prototype.isEmpty = function () {
-                return this.keyEles.length == 0;
-            };
-            OrderedMap.prototype.containsKey = function (key) {
-                for (var i = 0; i < this.keyEles.length; i++) {
-                    if (this.keyEles[i] == key) {
-                        return true;
-                    }
-                }
-                return false;
-            };
-            OrderedMap.prototype.get = function (key) {
-                for (var i = 0; i < this.keyEles.length; i++) {
-                    if (this.keyEles[i] == key) {
-                        return this.elements[i];
-                    }
-                }
-                return null;
-            };
-            OrderedMap.prototype.put = function (key, value) {
-                for (var i = 0; i < this.keyEles.length; i++) {
-                    if (this.keyEles[i] == key) {
-                        this.elements[i] = value;
-                        return this;
-                    }
-                }
-                this.keyEles.push(key);
-                this.elements.push(value);
-                return this;
-            };
-            OrderedMap.prototype.delete = function (key) {
-                for (var i = 0; i < this.keyEles.length; i++) {
-                    if (this.keyEles[i] == key) {
-                        this.keyEles.splice(i, 1);
-                        this.elements.splice(i, 1);
-                        return true;
-                    }
-                }
-                return false;
-            };
-            OrderedMap.prototype.clear = function () {
-                this.elements = [];
-                this.keyEles = [];
-            };
-            OrderedMap.prototype.forEach = function (callbackfn) {
-                for (var i = 0; i < this.keyEles.length; i++) {
-                    callbackfn(this.keyEles[i], this.elements[i], this);
-                }
-            };
-            OrderedMap.prototype.keys = function () {
-                return new MapIterator(this.keyEles);
-            };
-            OrderedMap.prototype.values = function () {
-                return new MapIterator(this.elements);
-            };
-            OrderedMap.prototype.size = function () {
-                return this.keyEles.length;
-            };
-            return OrderedMap;
-        }());
-        collection.OrderedMap = OrderedMap;
-        var MapIterator = (function () {
-            function MapIterator(e) {
-                this.elements = e;
-                this.ps = 0;
-            }
-            MapIterator.prototype.next = function () {
-                if (this.ps >= this.elements.length) {
-                    return {
-                        value: undefined,
-                        done: true
-                    };
-                }
-                this.ps++;
-                return {
-                    value: this.elements[this.ps - 1],
-                    done: false
-                };
-            };
-            MapIterator.prototype.dataArray = function () {
-                return this.elements;
-            };
-            return MapIterator;
-        }());
-        collection.MapIterator = MapIterator;
-    })(collection = ninlgde.collection || (ninlgde.collection = {}));
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var EventCenter = (function () {
-        function EventCenter() {
-            this._TAG = "EventCenter";
-            this.eventMap = null; //
-            this.eventMap = new ninlgde.collection.HashMap();
-        }
-        EventCenter.getInstance = function () {
-            if (this.instance == null) {
-                this.instance = new EventCenter();
-            }
-            return this.instance;
-        };
-        EventCenter.prototype.fireEvent = function (event) {
-            var args = [];
-            for (var _i = 1; _i < arguments.length; _i++) {
-                args[_i - 1] = arguments[_i];
-            }
-            var events = this.eventMap.get(event);
-            if (events != null) {
-                events.forEach(function (e) {
-                    if (e) {
-                        e.getHandler().apply(e.getScope(), args);
-                    }
-                });
-            }
-        };
-        EventCenter.prototype.registEventListener = function (event, handler, scope) {
-            if (typeof event != "string" || typeof handler != "function") {
-                log.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler);
-                return;
-            }
-            var events = this.eventMap.get(event);
-            if (events == null) {
-                events = new Array();
-                this.eventMap.put(event, events);
-            }
-            var listener = new ninlgde.EventListener(handler, scope);
-            events.push(listener);
-        };
-        EventCenter.prototype.unregistEventListener = function (event, handler, scope) {
-            var events = this.eventMap.get(event);
-            if (events == null) {
-                return;
-            }
-            var newEvents = events.filter(function (e) {
-                return e.getHandler() != handler || e.getScope() != scope;
-            });
-            this.eventMap.put(event, newEvents);
-            events = null;
-        };
-        EventCenter.prototype.unregistScope = function (scope) {
-            var _this = this;
-            this.eventMap.forEach(function (event, events) {
-                var newEvents = events.filter(function (e) {
-                    return e.getScope() != scope;
-                });
-                _this.eventMap.put(event, newEvents);
-            });
-        };
-        return EventCenter;
-    }());
-    ninlgde.EventCenter = EventCenter;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var EventListener = (function () {
-        function EventListener(handler, scope) {
-            this.handler = handler;
-            this.scope = scope;
-        }
-        EventListener.prototype.getScope = function () {
-            return this.scope;
-        };
-        EventListener.prototype.getHandler = function () {
-            return this.handler;
-        };
-        return EventListener;
-    }());
-    ninlgde.EventListener = EventListener;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    var net;
-    (function (net) {
-        "use strict";
-    })(net = ninlgde.net || (ninlgde.net = {}));
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    var net;
-    (function (net) {
-        "use strict";
-    })(net = ninlgde.net || (ninlgde.net = {}));
-})(ninlgde || (ninlgde = {}));
-///<reference path='../../utils/Assert.ts' />
-///<reference path='IConnectionHandler.ts' />
-var ninlgde;
-(function (ninlgde) {
-    var net;
-    (function (net) {
-        "use strict";
-        var ConnectionState;
-        (function (ConnectionState) {
-            ConnectionState[ConnectionState["CLOSED"] = 0] = "CLOSED";
-            ConnectionState[ConnectionState["CONNECTING"] = 1] = "CONNECTING";
-            ConnectionState[ConnectionState["CONNECTED"] = 2] = "CONNECTED";
-        })(ConnectionState || (ConnectionState = {}));
-        var Connection = (function () {
-            function Connection(handler) {
-                this.socket = null;
-                this.connectionState = ConnectionState.CLOSED;
-                this.timeoutId = 0;
-                this.url = "";
-                this.handler = handler;
-            }
-            Connection.prototype.createSocket = function () {
-                var _this = this;
-                var socket = new WebSocket(this.url);
-                socket.binaryType = 'arraybuffer';
-                socket.onopen = function (event) {
-                    if (_this.onConnectionCreated) {
-                        _this.onConnectionCreated(event);
-                    }
-                };
-                socket.onmessage = function (event) {
-                    if (_this.onMessage) {
-                        _this.onMessage(event);
-                    }
-                };
-                socket.onerror = function (event) {
-                    if (_this.onConnectionError) {
-                        _this.onConnectionError(event);
-                    }
-                };
-                socket.onclose = function (event) {
-                    if (_this.onConnectionClosed) {
-                        _this.onConnectionClosed(event);
-                    }
-                };
-                return socket;
-            };
-            Connection.prototype.connection = function (url) {
-                ninlgde.Assert.isFalse(this.socket == null, "websocket should be null");
-                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CLOSED, "connection state should be closed");
-                ninlgde.Assert.isTrue(url === "", "url error");
-                this.url = url;
-                this.socket = this.createSocket();
-                this.timeoutId = this.setTimeOut();
-                return true;
-            };
-            Connection.prototype.send = function (message) {
-                if (ninlgde.Assert.isTrue(this.socket == null, "websocket is null")) {
-                    return false;
-                }
-                if (ninlgde.Assert.isTrue(this.connectionState != ConnectionState.CONNECTED, "websocket connecting")) {
-                    return false;
-                }
-                this.socket.send(message);
-                return true;
-            };
-            Connection.prototype.close = function () {
-                if (this.socket !== null) {
-                    this.socket.close();
-                    this.socket = null;
-                }
-                this.clearTimeOut();
-                this.connectionState = ConnectionState.CLOSED;
-            };
-            Connection.prototype.reconnect = function () {
-                this.close();
-                this.socket = this.createSocket();
-                this.timeoutId = this.setTimeOut();
-            };
-            Connection.prototype.clearTimeOut = function () {
-                this.timeoutId && clearTimeout(this.timeoutId);
-                this.timeoutId = 0;
-            };
-            Connection.prototype.setTimeOut = function (time) {
-                var _this = this;
-                if (time === void 0) { time = 3; }
-                // 清理timeout
-                this.clearTimeOut();
-                var timeout = setTimeout(function () {
-                    if (_this.socket.readyState !== WebSocket.OPEN) {
-                        _this.close();
-                        _this.onConnectionClosed(null);
-                    }
-                }, time);
-                return timeout;
-            };
-            Connection.prototype.onConnectionCreated = function (event) {
-                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTING, "connection state not CONNECTING");
-                this.connectionState = ConnectionState.CONNECTED;
-                this.clearTimeOut();
-                if (this.handler) {
-                    this.handler.onConnectionCreated(event);
-                }
-                // broadcast connection created
-                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CREATED);
-            };
-            Connection.prototype.onConnectionClosed = function (event) {
-                if (this.connectionState == ConnectionState.CLOSED) {
-                    return;
-                }
-                this.close();
-                if (this.handler) {
-                    this.handler.onConnectionClosed(event);
-                }
-                // broadcast connection closed
-                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CLOSED);
-            };
-            Connection.prototype.onConnectionError = function (err) {
-                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTED, "connection state not CONNECTED");
-                if (this.connectionState == ConnectionState.CLOSED) {
-                    return;
-                }
-                this.close();
-                if (this.handler) {
-                    this.handler.onConnectionError(event);
-                }
-                // broadcast connection error
-                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_ERROR);
-            };
-            Connection.prototype.onMessage = function (data) {
-                // TODO: decode data, and broadcast by id
-                // var dataView = new DataView(data);
-                // var length = dataView.getInt32(0, false);
-                // var id = dataView.getInt32(4, false);
-                // var command = dataView.getInt16(8, false);
-                // // console.info(length, id, command);
-                // var buffer =  new Uint8Array(length - 6) 
-                // for(var i = 0; i < length - 6; i++) {
-                //     buffer[i] = dataView.getInt8(i + 8);
-                // }
-            };
-            return Connection;
-        }());
-        net.Connection = Connection;
-    })(net = ninlgde.net || (ninlgde.net = {}));
-})(ninlgde || (ninlgde = {}));
-// module ninlgde.net {
-//     export class Connector implements IConnector {
-//     }
-// } 
-// module ninlgde.net {
-//     export interface IConnector {
-//         dispose()
-//         connect(url)
-//         onConnectionCreated()
-//         onConnectionLost(err)
-//         reconnect()
-//     }
-// } 
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var LAYOUR;
-    (function (LAYOUR) {
-        LAYOUR[LAYOUR["SENCE"] = 0] = "SENCE";
-        LAYOUR[LAYOUR["WINDOW"] = 1] = "WINDOW";
-        LAYOUR[LAYOUR["TOP"] = 2] = "TOP";
-        LAYOUR[LAYOUR["DEBUG"] = 3] = "DEBUG";
-    })(LAYOUR || (LAYOUR = {}));
-    var UIManager = (function () {
-        function UIManager() {
-            this.uiLayouts = null;
-            this.conf = null;
-        }
-        UIManager.getInstance = function () {
-            return this.instance;
-        };
-        UIManager.create = function () {
-            if (ninlgde.Assert.isFalse(this.instance == null)) {
-                this.instance = new UIManager();
-            }
-            return true;
-        };
-        UIManager.prototype.setLayouts = function (uiLayouts) {
-            this.uiLayouts = uiLayouts;
-        };
-        UIManager.prototype.loadConf = function (conf) {
-            this.conf = conf;
-        };
-        return UIManager;
-    }());
-    UIManager.instance = null;
-    ninlgde.UIManager = UIManager;
-})(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    var Events = (function () {
-        function Events() {
-        }
-        return Events;
-    }());
-    Events.CONNECTION_CREATED = "CONNECTION_CREATED";
-    Events.CONNECTION_CLOSED = "CONNECTION_CLOSED";
-    Events.CONNECTION_ERROR = "CONNECTION_ERROR";
-    Events.CONNECTION_MESSAGE = "CONNECTION_MESSAGE";
-    ninlgde.Events = Events;
-})(ninlgde || (ninlgde = {}));
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 ///<reference path='../../../../../org/puremvc/typescript/multicore/interfaces/INotifier.ts'/>
 ///<reference path='../../../../../org/puremvc/typescript/multicore/interfaces/INotification.ts'/>
 ///<reference path='../../../../../org/puremvc/typescript/multicore/interfaces/INotifier.ts'/>
@@ -521,7 +55,7 @@ var puremvc;
      * method invoked, passing in an object implementing the <code>INotification</code> interface,
      * such as a subclass of <code>Notification</code>.
      */
-    var Observer = (function () {
+    var Observer = /** @class */ (function () {
         /**
          * Constructs an <code>Observer</code> instance.
          *
@@ -632,7 +166,7 @@ var puremvc;
      * <LI>Notifying the <code>IObserver</code>s of a given <code>INotification</code> when it
      * broadcasts.
      */
-    var View = (function () {
+    var View = /** @class */ (function () {
         /**
          * This <code>IView</code> implementation is a multiton, so you should not call the
          * constructor directly, but instead call the static multiton Factory method
@@ -862,22 +396,22 @@ var puremvc;
         View.removeView = function (key) {
             delete View.instanceMap[key];
         };
+        /**
+         * Error message used to indicate that a <code>View</code> singleton instance is
+         * already constructed for this multiton key.
+         *
+         * @constant
+         * @protected
+         */
+        View.MULTITON_MSG = "View instance for this multiton key already constructed!";
+        /**
+         * <code>View</code> singleton instance map.
+         *
+         * @protected
+         */
+        View.instanceMap = {};
         return View;
     }());
-    /**
-     * Error message used to indicate that a <code>View</code> singleton instance is
-     * already constructed for this multiton key.
-     *
-     * @constant
-     * @protected
-     */
-    View.MULTITON_MSG = "View instance for this multiton key already constructed!";
-    /**
-     * <code>View</code> singleton instance map.
-     *
-     * @protected
-     */
-    View.instanceMap = {};
     puremvc.View = View;
 })(puremvc || (puremvc = {}));
 ///<reference path='../../../../../org/puremvc/typescript/multicore/interfaces/IController.ts'/>
@@ -912,7 +446,7 @@ var puremvc;
      * The simplest way is to subclass </code>Facade</code>, and use its
      * <code>initializeController</code> method to add your registrations.
      */
-    var Controller = (function () {
+    var Controller = /** @class */ (function () {
         /**
          * Constructs a <code>Controller</code> instance.
          *
@@ -1069,22 +603,22 @@ var puremvc;
         Controller.removeController = function (key) {
             delete Controller.instanceMap[key];
         };
+        /**
+         * Error message used to indicate that a <code>Controller</code> singleton instance is
+         * already constructed for this multiton key.
+         *
+         * @protected
+         * @constant
+         */
+        Controller.MULTITON_MSG = "Controller instance for this multiton key already constructed!";
+        /**
+         * <code>Controller</code> singleton instance map.
+         *
+         * @protected
+         */
+        Controller.instanceMap = {};
         return Controller;
     }());
-    /**
-     * Error message used to indicate that a <code>Controller</code> singleton instance is
-     * already constructed for this multiton key.
-     *
-     * @protected
-     * @constant
-     */
-    Controller.MULTITON_MSG = "Controller instance for this multiton key already constructed!";
-    /**
-     * <code>Controller</code> singleton instance map.
-     *
-     * @protected
-     */
-    Controller.instanceMap = {};
     puremvc.Controller = Controller;
 })(puremvc || (puremvc = {}));
 ///<reference path='../../../../../org/puremvc/typescript/multicore/interfaces/IModel.ts'/>
@@ -1109,7 +643,7 @@ var puremvc;
      * Typically, you use an <code>ICommand</code> to create and register <code>Proxy</code> instances
      * once the <code>Facade</code> has initialized the core actors.
      */
-    var Model = (function () {
+    var Model = /** @class */ (function () {
         /**
          * This <code>IModel</code> implementation is a multiton, so you should not call the
          * constructor directly, but instead call the static multiton Factory method
@@ -1229,22 +763,22 @@ var puremvc;
         Model.removeModel = function (key) {
             delete Model.instanceMap[key];
         };
+        /**
+         * Error message used to indicate that a <code>Model</code> singleton instance is
+         * already constructed for this multiton key.
+         *
+         * @constant
+         * @protected
+         */
+        Model.MULTITON_MSG = "Model instance for this multiton key already constructed!";
+        /**
+         * <code>Model</code> singleton instance map.
+         *
+         * @protected
+         */
+        Model.instanceMap = {};
         return Model;
     }());
-    /**
-     * Error message used to indicate that a <code>Model</code> singleton instance is
-     * already constructed for this multiton key.
-     *
-     * @constant
-     * @protected
-     */
-    Model.MULTITON_MSG = "Model instance for this multiton key already constructed!";
-    /**
-     * <code>Model</code> singleton instance map.
-     *
-     * @protected
-     */
-    Model.instanceMap = {};
     puremvc.Model = Model;
 })(puremvc || (puremvc = {}));
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/INotification.ts'/>
@@ -1275,7 +809,7 @@ var puremvc;
      * pattern. PureMVC classes need not be related to each other in a parent/child relationship in
      * order to communicate with one another using <code>INotification</code>s.
      */
-    var Notification = (function () {
+    var Notification = /** @class */ (function () {
         /**
          * Constructs a <code>Notification</code> instance.
          *
@@ -1400,7 +934,7 @@ var puremvc;
      * This <code>Facade</code> implementation is a multiton instance and cannot be instantiated directly,
      * but instead calls the static multiton factory method <code>Facade.getInstance( key )</code>.
      */
-    var Facade = (function () {
+    var Facade = /** @class */ (function () {
         /**
          * Constructs a <code>Controller</code> instance.
          *
@@ -1767,19 +1301,19 @@ var puremvc;
             puremvc.Controller.removeController(key);
             delete Facade.instanceMap[key];
         };
+        /**
+         * @constant
+         * @protected
+         */
+        Facade.MULTITON_MSG = "Facade instance for this multiton key already constructed!";
+        /**
+         * <code>Facade</code> singleton instance map.
+         *
+         * @protected
+         */
+        Facade.instanceMap = {};
         return Facade;
     }());
-    /**
-     * @constant
-     * @protected
-     */
-    Facade.MULTITON_MSG = "Facade instance for this multiton key already constructed!";
-    /**
-     * <code>Facade</code> singleton instance map.
-     *
-     * @protected
-     */
-    Facade.instanceMap = {};
     puremvc.Facade = Facade;
 })(puremvc || (puremvc = {}));
 ///<reference path='../../../org/puremvc/typescript/multicore/patterns/facade/Facade.ts'/>
@@ -1790,7 +1324,7 @@ var ninlgde;
     ninlgde.logger = null;
     // pureMVC 的入口
     ninlgde.app = null;
-    var GameFrame = (function () {
+    var GameFrame = /** @class */ (function () {
         function GameFrame(game) {
             this._TAG = "GameFrame";
             this.GAME_NAME = null;
@@ -1817,7 +1351,7 @@ var ninlgde;
             // 初始化pureMVC
             ninlgde.app = puremvc.Facade.getInstance(this.GAME_NAME);
             // 创建UImanager
-            ninlgde.UIManager.create();
+            ninlgde.ui.UIManager.create();
             ninlgde.logger.info(this._TAG, "Ninlgde Framework has initialized");
         };
         /**
@@ -1830,15 +1364,274 @@ var ninlgde;
         GameFrame.prototype.getGameName = function () {
             return this.GAME_NAME;
         };
+        GameFrame.instance = null;
         return GameFrame;
     }());
-    GameFrame.instance = null;
     ninlgde.GameFrame = GameFrame;
 })(ninlgde || (ninlgde = {}));
 var ninlgde;
 (function (ninlgde) {
+    var collection;
+    (function (collection) {
+        /**
+         * HashMap
+         * key不能是object，否则会出问题
+         */
+        var HashMap = /** @class */ (function () {
+            function HashMap() {
+                this.len = 0;
+                this.obj = new Object();
+            }
+            HashMap.prototype.isEmpty = function () {
+                return this.len == 0;
+            };
+            HashMap.prototype.containsKey = function (key) {
+                return (key in this.obj);
+            };
+            HashMap.prototype.get = function (key) {
+                return this.containsKey(key) ? this.obj[key] : null;
+            };
+            HashMap.prototype.put = function (key, value) {
+                if (!this.containsKey(key)) {
+                    this.len++;
+                }
+                this.obj[key] = value;
+                return this;
+            };
+            HashMap.prototype.delete = function (key) {
+                if (this.containsKey(key) && (delete this.obj[key])) {
+                    this.len--;
+                    return true;
+                }
+                return false;
+            };
+            HashMap.prototype.clear = function () {
+                this.len = 0;
+                this.obj = new Object();
+            };
+            HashMap.prototype.forEach = function (callbackfn) {
+                var keys = this.keySet();
+                for (var i = 0; i < this.len; i++) {
+                    var key = keys[i];
+                    callbackfn(key, this.obj[key], this);
+                }
+            };
+            HashMap.prototype.keySet = function () {
+                var keys = new Array();
+                for (var key in this.obj) {
+                    keys.push(key);
+                }
+                return keys;
+            };
+            HashMap.prototype.valueList = function () {
+                var values = new Array();
+                for (var key in this.obj) {
+                    values.push(this.obj[key]);
+                }
+                return values;
+            };
+            HashMap.prototype.keys = function () {
+                return new MapIterator(this.keySet());
+            };
+            HashMap.prototype.values = function () {
+                return new MapIterator(this.valueList());
+            };
+            HashMap.prototype.size = function () {
+                return this.len;
+            };
+            return HashMap;
+        }());
+        collection.HashMap = HashMap;
+        /**
+         *  OrderedMap
+         */
+        var OrderedMap = /** @class */ (function () {
+            function OrderedMap() {
+                this.keyEles = [];
+                this.elements = [];
+            }
+            OrderedMap.prototype.isEmpty = function () {
+                return this.keyEles.length == 0;
+            };
+            OrderedMap.prototype.containsKey = function (key) {
+                for (var i = 0; i < this.keyEles.length; i++) {
+                    if (this.keyEles[i] == key) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            OrderedMap.prototype.get = function (key) {
+                for (var i = 0; i < this.keyEles.length; i++) {
+                    if (this.keyEles[i] == key) {
+                        return this.elements[i];
+                    }
+                }
+                return null;
+            };
+            OrderedMap.prototype.put = function (key, value) {
+                for (var i = 0; i < this.keyEles.length; i++) {
+                    if (this.keyEles[i] == key) {
+                        this.elements[i] = value;
+                        return this;
+                    }
+                }
+                this.keyEles.push(key);
+                this.elements.push(value);
+                return this;
+            };
+            OrderedMap.prototype.delete = function (key) {
+                for (var i = 0; i < this.keyEles.length; i++) {
+                    if (this.keyEles[i] == key) {
+                        this.keyEles.splice(i, 1);
+                        this.elements.splice(i, 1);
+                        return true;
+                    }
+                }
+                return false;
+            };
+            OrderedMap.prototype.clear = function () {
+                this.elements = [];
+                this.keyEles = [];
+            };
+            OrderedMap.prototype.forEach = function (callbackfn) {
+                for (var i = 0; i < this.keyEles.length; i++) {
+                    callbackfn(this.keyEles[i], this.elements[i], this);
+                }
+            };
+            OrderedMap.prototype.keys = function () {
+                return new MapIterator(this.keyEles);
+            };
+            OrderedMap.prototype.values = function () {
+                return new MapIterator(this.elements);
+            };
+            OrderedMap.prototype.size = function () {
+                return this.keyEles.length;
+            };
+            return OrderedMap;
+        }());
+        collection.OrderedMap = OrderedMap;
+        var MapIterator = /** @class */ (function () {
+            function MapIterator(e) {
+                this.elements = e;
+                this.ps = 0;
+            }
+            MapIterator.prototype.next = function () {
+                if (this.ps >= this.elements.length) {
+                    return {
+                        value: undefined,
+                        done: true
+                    };
+                }
+                this.ps++;
+                return {
+                    value: this.elements[this.ps - 1],
+                    done: false
+                };
+            };
+            MapIterator.prototype.dataArray = function () {
+                return this.elements;
+            };
+            return MapIterator;
+        }());
+        collection.MapIterator = MapIterator;
+    })(collection = ninlgde.collection || (ninlgde.collection = {}));
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
     "use strict";
-    var Assert = (function () {
+    var EventCenter = /** @class */ (function () {
+        function EventCenter() {
+            this._TAG = "EventCenter";
+            this.eventMap = null; //
+            this.eventMap = new ninlgde.collection.HashMap();
+        }
+        EventCenter.getInstance = function () {
+            if (this.instance == null) {
+                this.instance = new EventCenter();
+            }
+            return this.instance;
+        };
+        EventCenter.prototype.fireEvent = function (event) {
+            var args = [];
+            for (var _i = 1; _i < arguments.length; _i++) {
+                args[_i - 1] = arguments[_i];
+            }
+            var events = this.eventMap.get(event);
+            if (events != null) {
+                events.forEach(function (e) {
+                    if (e) {
+                        e.getHandler().apply(e.getScope(), args);
+                    }
+                });
+            }
+        };
+        EventCenter.prototype.registEventListener = function (event, handler, scope) {
+            if (typeof event != "string" || typeof handler != "function") {
+                ninlgde.logger.error(this._TAG, "EventCenter listen error: eName: {0} handler: {1}", event, handler);
+                return;
+            }
+            var events = this.eventMap.get(event);
+            if (events == null) {
+                events = new Array();
+                this.eventMap.put(event, events);
+            }
+            var listener = new ninlgde.EventListener(handler, scope);
+            events.push(listener);
+        };
+        EventCenter.prototype.unregistEventListener = function (event, handler, scope) {
+            var events = this.eventMap.get(event);
+            if (events == null) {
+                return;
+            }
+            var newEvents = events.filter(function (e) {
+                return e.getHandler() != handler || e.getScope() != scope;
+            });
+            this.eventMap.put(event, newEvents);
+            events = null;
+        };
+        EventCenter.prototype.unregistScope = function (scope) {
+            var _this = this;
+            this.eventMap.forEach(function (event, events) {
+                var newEvents = events.filter(function (e) {
+                    return e.getScope() != scope;
+                });
+                _this.eventMap.put(event, newEvents);
+            });
+        };
+        return EventCenter;
+    }());
+    ninlgde.EventCenter = EventCenter;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var EventListener = /** @class */ (function () {
+        function EventListener(handler, scope) {
+            this.handler = handler;
+            this.scope = scope;
+        }
+        EventListener.prototype.getScope = function () {
+            return this.scope;
+        };
+        EventListener.prototype.getHandler = function () {
+            return this.handler;
+        };
+        return EventListener;
+    }());
+    ninlgde.EventListener = EventListener;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    var net;
+    (function (net) {
+        "use strict";
+    })(net = ninlgde.net || (ninlgde.net = {}));
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var Assert = /** @class */ (function () {
         function Assert() {
         }
         /**
@@ -1871,8 +1664,320 @@ var ninlgde;
 })(ninlgde || (ninlgde = {}));
 var ninlgde;
 (function (ninlgde) {
+    var net;
+    (function (net) {
+        "use strict";
+    })(net = ninlgde.net || (ninlgde.net = {}));
+})(ninlgde || (ninlgde = {}));
+///<reference path='../../../utils/Assert.ts' />
+///<reference path='IConnectionHandler.ts' />
+var ninlgde;
+(function (ninlgde) {
+    var net;
+    (function (net) {
+        "use strict";
+        var ConnectionState;
+        (function (ConnectionState) {
+            ConnectionState[ConnectionState["CLOSED"] = 0] = "CLOSED";
+            ConnectionState[ConnectionState["CONNECTING"] = 1] = "CONNECTING";
+            ConnectionState[ConnectionState["CONNECTED"] = 2] = "CONNECTED";
+        })(ConnectionState || (ConnectionState = {}));
+        var Connection = /** @class */ (function () {
+            function Connection(handler) {
+                this.socket = null;
+                this.connectionState = ConnectionState.CLOSED;
+                this.timeoutId = 0;
+                this.url = "";
+                this.handler = handler;
+            }
+            Connection.prototype.createSocket = function () {
+                var _this = this;
+                var socket = new WebSocket(this.url);
+                socket.binaryType = 'arraybuffer';
+                socket.onopen = function (event) {
+                    if (_this.onConnectionCreated) {
+                        _this.onConnectionCreated(event);
+                    }
+                };
+                socket.onmessage = function (event) {
+                    if (_this.onMessage) {
+                        _this.onMessage(event);
+                    }
+                };
+                socket.onerror = function (event) {
+                    if (_this.onConnectionError) {
+                        _this.onConnectionError(event);
+                    }
+                };
+                socket.onclose = function (event) {
+                    if (_this.onConnectionClosed) {
+                        _this.onConnectionClosed(event);
+                    }
+                };
+                return socket;
+            };
+            Connection.prototype.connection = function (url) {
+                ninlgde.Assert.isFalse(this.socket == null, "websocket should be null");
+                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CLOSED, "connection state should be closed");
+                ninlgde.Assert.isTrue(url === "", "url error");
+                this.url = url;
+                this.socket = this.createSocket();
+                this.timeoutId = this.setTimeOut();
+                return true;
+            };
+            Connection.prototype.send = function (message) {
+                if (ninlgde.Assert.isTrue(this.socket == null, "websocket is null")) {
+                    return false;
+                }
+                if (ninlgde.Assert.isTrue(this.connectionState != ConnectionState.CONNECTED, "websocket connecting")) {
+                    return false;
+                }
+                this.socket.send(message);
+                return true;
+            };
+            Connection.prototype.close = function () {
+                if (this.socket !== null) {
+                    this.socket.close();
+                    this.socket = null;
+                }
+                this.clearTimeOut();
+                this.connectionState = ConnectionState.CLOSED;
+            };
+            Connection.prototype.reconnect = function () {
+                this.close();
+                this.socket = this.createSocket();
+                this.timeoutId = this.setTimeOut();
+            };
+            Connection.prototype.clearTimeOut = function () {
+                this.timeoutId && clearTimeout(this.timeoutId);
+                this.timeoutId = 0;
+            };
+            Connection.prototype.setTimeOut = function (time) {
+                var _this = this;
+                if (time === void 0) { time = 3; }
+                // 清理timeout
+                this.clearTimeOut();
+                var timeout = setTimeout(function () {
+                    if (_this.socket.readyState !== WebSocket.OPEN) {
+                        _this.close();
+                        _this.onConnectionClosed(null);
+                    }
+                }, time);
+                return timeout;
+            };
+            Connection.prototype.onConnectionCreated = function (event) {
+                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTING, "connection state not CONNECTING");
+                this.connectionState = ConnectionState.CONNECTED;
+                this.clearTimeOut();
+                if (this.handler) {
+                    this.handler.onConnectionCreated(event);
+                }
+                // broadcast connection created
+                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CREATED);
+            };
+            Connection.prototype.onConnectionClosed = function (event) {
+                if (this.connectionState == ConnectionState.CLOSED) {
+                    return;
+                }
+                this.close();
+                if (this.handler) {
+                    this.handler.onConnectionClosed(event);
+                }
+                // broadcast connection closed
+                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_CLOSED);
+            };
+            Connection.prototype.onConnectionError = function (err) {
+                ninlgde.Assert.isFalse(this.connectionState == ConnectionState.CONNECTED, "connection state not CONNECTED");
+                if (this.connectionState == ConnectionState.CLOSED) {
+                    return;
+                }
+                this.close();
+                if (this.handler) {
+                    this.handler.onConnectionError(event);
+                }
+                // broadcast connection error
+                ninlgde.EventCenter.getInstance().fireEvent(ninlgde.Events.CONNECTION_ERROR);
+            };
+            Connection.prototype.onMessage = function (data) {
+                // TODO: decode data, and broadcast by id
+                // var dataView = new DataView(data);
+                // var length = dataView.getInt32(0, false);
+                // var id = dataView.getInt32(4, false);
+                // var command = dataView.getInt16(8, false);
+                // // console.info(length, id, command);
+                // var buffer =  new Uint8Array(length - 6) 
+                // for(var i = 0; i < length - 6; i++) {
+                //     buffer[i] = dataView.getInt8(i + 8);
+                // }
+            };
+            return Connection;
+        }());
+        net.Connection = Connection;
+    })(net = ninlgde.net || (ninlgde.net = {}));
+})(ninlgde || (ninlgde = {}));
+// module ninlgde.net {
+//     export class Connector implements IConnector {
+//     }
+// }
+// module ninlgde.net {
+//     export interface IConnector {
+//         dispose()
+//         connect(url)
+//         onConnectionCreated()
+//         onConnectionLost(err)
+//         reconnect()
+//     }
+// }
+var ninlgde;
+(function (ninlgde) {
+    var ui;
+    (function (ui) {
+        "use strict";
+        var UIConfItem = /** @class */ (function () {
+            function UIConfItem(path, type, layer) {
+                // 路径
+                this._path = null;
+                // 类型----暂时还没想好
+                this._type = null;
+                // 放到哪层
+                this._layer = null;
+                this._path = path;
+                this._type = type;
+                this._layer = layer;
+            }
+            Object.defineProperty(UIConfItem.prototype, "path", {
+                get: function () {
+                    return this._path;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(UIConfItem.prototype, "type", {
+                get: function () {
+                    return this._type;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(UIConfItem.prototype, "layer", {
+                get: function () {
+                    return this._layer;
+                },
+                enumerable: true,
+                configurable: true
+            });
+            return UIConfItem;
+        }());
+        ui.UIConfItem = UIConfItem;
+    })(ui = ninlgde.ui || (ninlgde.ui = {}));
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    var ui;
+    (function (ui) {
+        "use strict";
+        var LAYOUR;
+        (function (LAYOUR) {
+            LAYOUR[LAYOUR["SENCE"] = 0] = "SENCE";
+            LAYOUR[LAYOUR["WINDOW"] = 1] = "WINDOW";
+            LAYOUR[LAYOUR["TOP"] = 2] = "TOP";
+            LAYOUR[LAYOUR["DEBUG"] = 3] = "DEBUG";
+        })(LAYOUR = ui.LAYOUR || (ui.LAYOUR = {}));
+        var UI_LOAD_ERROR;
+        (function (UI_LOAD_ERROR) {
+            UI_LOAD_ERROR[UI_LOAD_ERROR["COCOS_ERR"] = 0] = "COCOS_ERR";
+            UI_LOAD_ERROR[UI_LOAD_ERROR["TYPE_ERR"] = 1] = "TYPE_ERR";
+        })(UI_LOAD_ERROR || (UI_LOAD_ERROR = {}));
+        var UIManager = /** @class */ (function () {
+            function UIManager() {
+                this._TAG = "UIManager";
+                this.uiLayouts = null;
+                this.conf = null;
+            }
+            UIManager.getInstance = function () {
+                return this.instance;
+            };
+            UIManager.create = function () {
+                if (ninlgde.Assert.isFalse(this.instance == null)) {
+                    this.instance = new UIManager();
+                }
+                return true;
+            };
+            UIManager.prototype.setLayouts = function (uiLayouts) {
+                this.uiLayouts = uiLayouts;
+            };
+            UIManager.prototype.loadConf = function (conf) {
+                this.conf = conf;
+            };
+            UIManager.prototype.showUI = function (name) {
+                var _this = this;
+                var uiitem = this.conf.get(name);
+                // 检查是否有这个ui的配置
+                if (ninlgde.Assert.isTrue(uiitem == null, ninlgde.Utils.StringFormat("CANNOT FIND THE UI<{0}> CONFIG ITEM", name))) {
+                    return;
+                }
+                this.loadCocosPrefab(uiitem.path).then(function (loadedResource) {
+                    //开始实例化预制资源
+                    var prefab = cc.instantiate(loadedResource);
+                    //将预制资源添加到父节点
+                    _this.getLayer(uiitem.layer).addChild(prefab);
+                    // cc.director.getScene().addChild(prefab)
+                }).catch(function (reason) {
+                    if (reason == UI_LOAD_ERROR.COCOS_ERR) {
+                        ninlgde.logger.error(_this._TAG, '载入预制资源失败');
+                    }
+                    else if (reason == UI_LOAD_ERROR.TYPE_ERR) {
+                        ninlgde.logger.error(_this._TAG, '你载入的不是预制资源!');
+                    }
+                    else {
+                        ninlgde.logger.error(_this._TAG, "UNKNOW ERROR");
+                    }
+                });
+            };
+            UIManager.prototype.getLayer = function (layout) {
+                return this.uiLayouts[layout].node;
+            };
+            UIManager.prototype.loadCocosPrefab = function (path) {
+                return new Promise(function (resolve, reject) {
+                    //加载预制资源 PrefabUrl为 预制资源在 资源中的路径
+                    cc.loader.loadRes(path, function (errorMessage, loadedResource) {
+                        if (errorMessage) {
+                            ninlgde.logger.error(this._TAG, '载入预制资源失败, 原因:' + errorMessage);
+                            reject(UI_LOAD_ERROR.COCOS_ERR);
+                            return;
+                        }
+                        if (!(loadedResource instanceof cc.Prefab)) {
+                            reject(UI_LOAD_ERROR.TYPE_ERR);
+                            return;
+                        }
+                        resolve(loadedResource);
+                    });
+                });
+            };
+            UIManager.instance = null;
+            return UIManager;
+        }());
+        ui.UIManager = UIManager;
+    })(ui = ninlgde.ui || (ninlgde.ui = {}));
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
     "use strict";
-    var Utils = (function () {
+    var Events = /** @class */ (function () {
+        function Events() {
+        }
+        Events.CONNECTION_CREATED = "CONNECTION_CREATED";
+        Events.CONNECTION_CLOSED = "CONNECTION_CLOSED";
+        Events.CONNECTION_ERROR = "CONNECTION_ERROR";
+        Events.CONNECTION_MESSAGE = "CONNECTION_MESSAGE";
+        return Events;
+    }());
+    ninlgde.Events = Events;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    var Utils = /** @class */ (function () {
         function Utils() {
         }
         Utils.StringFormat = function (fmt) {
@@ -1938,7 +2043,7 @@ var ninlgde;
         LoggerLevel[LoggerLevel["count"] = 5] = "count";
     })(LoggerLevel = ninlgde.LoggerLevel || (ninlgde.LoggerLevel = {}));
     var LEVEL_STR = ["", "ERROR", "WARN", "INFO", "DEBUG"];
-    var Logger = (function () {
+    var Logger = /** @class */ (function () {
         /**
          * 初始化日志和所属模块
          * @param level
@@ -1970,7 +2075,7 @@ var ninlgde;
             var time = ninlgde.Utils.DateFormat(new Date(), "MM-dd hh:mm:ss.S");
             var totalFrames = cc.director.getTotalFrames();
             var result = ninlgde.Utils.StringFormat("[NINLGDE LOG][{0}][{1}--{2}]=>[TAG:{3}][{4}] {5}", this.themodule, time, totalFrames, tag, levelStr, content);
-            cc.log(result);
+            console.log(result);
         };
         Logger.prototype.error = function (tag, format) {
             var args = [];
@@ -2015,12 +2120,66 @@ var ninlgde;
 var ninlgde;
 (function (ninlgde) {
     "use strict";
-    var ObjcetPool = (function () {
-        function ObjcetPool() {
+    var ObjectPool = /** @class */ (function () {
+        function ObjectPool() {
         }
-        return ObjcetPool;
+        return ObjectPool;
     }());
-    ninlgde.ObjcetPool = ObjcetPool;
+    ninlgde.ObjectPool = ObjectPool;
+})(ninlgde || (ninlgde = {}));
+var ninlgde;
+(function (ninlgde) {
+    "use strict";
+    // class TimerCallback {
+    //     public scope: any
+    //     public handler: any
+    //     public interval: number
+    //     public repeat: number
+    //     public delay: number 
+    //     constructor(scope, handler, interval, repeat, delay) {
+    //         this.scope = scope
+    //         this.handler = handler
+    //         this.interval = interval
+    //         this.repeat = repeat
+    //         this.delay = delay
+    //     }
+    //     public called() {
+    //         this.repeat --;
+    //     }
+    //     public isDead() {
+    //         return this.repeat == 0 // 无穷次就是-1
+    //     }
+    // }
+    var Timer = /** @class */ (function () {
+        function Timer() {
+        }
+        // private static timerMap: collection.Map<any, collection.OrderedMap<any, TimerCallback>>
+        // private static checkMap() {
+        //     if (this.timerMap != null) {
+        //         return
+        //     }
+        //     this.timerMap = new collection.OrderedMap<any, collection.OrderedMap<any, TimerCallback>>()
+        // }
+        // private static getCallbacks(scope) {
+        //     this.checkMap()
+        //     let callbacks = this.timerMap.get(scope)
+        //     if (callbacks == null) {
+        //         callbacks = new collection.OrderedMap<any, TimerCallback>()
+        //         this.timerMap.put(scope, callbacks)
+        //     }
+        //     return callbacks
+        // }
+        Timer.setTimer = function (scope, handler, interval, repeat, delay) {
+            var scheduler = cc.director.getScheduler();
+            scheduler.schedule(handler, scope, interval, repeat, delay);
+        };
+        Timer.cancelTimer = function (scope, handler) {
+            var scheduler = cc.director.getScheduler();
+            scheduler.unschedule(handler, scope);
+        };
+        return Timer;
+    }());
+    ninlgde.Timer = Timer;
 })(ninlgde || (ninlgde = {}));
 var ninlgde;
 (function (ninlgde) {
@@ -2035,7 +2194,7 @@ var ninlgde;
 var ninlgde;
 (function (ninlgde) {
     "use strict";
-    var State = (function () {
+    var State = /** @class */ (function () {
         function State(stateId) {
             this._TAG = "State";
             // private static instance = null
@@ -2103,7 +2262,7 @@ var puremvc;
      * <LI>On a <code>IMediator</code> is registered with the <code>View</code>.
      * <LI>On a <code>IProxy</code> is registered with the <code>Model</code>.
      */
-    var Notifier = (function () {
+    var Notifier = /** @class */ (function () {
         function Notifier() {
             /**
              * The multiton key for this core.
@@ -2165,24 +2324,24 @@ var puremvc;
                 throw Error(Notifier.MULTITON_MSG);
             return puremvc.Facade.getInstance(this.multitonKey);
         };
+        /**
+         * Message Constants
+         *
+         * @constant
+         * @protected
+         */
+        Notifier.MULTITON_MSG = "multitonKey for this Notifier not yet initialized!";
         return Notifier;
     }());
-    /**
-     * Message Constants
-     *
-     * @constant
-     * @protected
-     */
-    Notifier.MULTITON_MSG = "multitonKey for this Notifier not yet initialized!";
     puremvc.Notifier = Notifier;
 })(puremvc || (puremvc = {}));
 ///<reference path='IState.ts'/>
 ///<reference path='IStateMachine.ts'/>
-///<reference path="../../../../../org/puremvc/typescript/multicore/patterns/observer/Notifier"/>
+///<reference path="../../../../../org/puremvc/typescript/multicore/patterns/observer/Notifier.ts"/>
 var ninlgde;
 (function (ninlgde) {
     "use strict";
-    var StateMachine = (function (_super) {
+    var StateMachine = /** @class */ (function (_super) {
         __extends(StateMachine, _super);
         function StateMachine() {
             var _this = _super.call(this) || this;
@@ -2231,67 +2390,13 @@ var ninlgde;
     }(puremvc.Notifier));
     ninlgde.StateMachine = StateMachine;
 })(ninlgde || (ninlgde = {}));
-var ninlgde;
-(function (ninlgde) {
-    "use strict";
-    // class TimerCallback {
-    //     public scope: any
-    //     public handler: any
-    //     public interval: number
-    //     public repeat: number
-    //     public delay: number 
-    //     constructor(scope, handler, interval, repeat, delay) {
-    //         this.scope = scope
-    //         this.handler = handler
-    //         this.interval = interval
-    //         this.repeat = repeat
-    //         this.delay = delay
-    //     }
-    //     public called() {
-    //         this.repeat --;
-    //     }
-    //     public isDead() {
-    //         return this.repeat == 0 // 无穷次就是-1
-    //     }
-    // }
-    var Timer = (function () {
-        function Timer() {
-        }
-        // private static timerMap: collection.Map<any, collection.OrderedMap<any, TimerCallback>>
-        // private static checkMap() {
-        //     if (this.timerMap != null) {
-        //         return
-        //     }
-        //     this.timerMap = new collection.OrderedMap<any, collection.OrderedMap<any, TimerCallback>>()
-        // }
-        // private static getCallbacks(scope) {
-        //     this.checkMap()
-        //     let callbacks = this.timerMap.get(scope)
-        //     if (callbacks == null) {
-        //         callbacks = new collection.OrderedMap<any, TimerCallback>()
-        //         this.timerMap.put(scope, callbacks)
-        //     }
-        //     return callbacks
-        // }
-        Timer.setTimer = function (scope, handler, interval, repeat, delay) {
-            var scheduler = cc.director.getScheduler();
-            scheduler.schedule(handler, scope, interval, repeat, delay);
-        };
-        Timer.cancelTimer = function (scope, handler) {
-            var scheduler = cc.director.getScheduler();
-            scheduler.unschedule(handler, scope);
-        };
-        return Timer;
-    }());
-    ninlgde.Timer = Timer;
-})(ninlgde || (ninlgde = {}));
 ///<reference path='../frame/utils/Logger.ts'/>
 var ngame;
 (function (ngame) {
     "use strict";
     // game的log
-    ngame.log = null;
-    var NGame = (function () {
+    ngame.logger = null;
+    var NGame = /** @class */ (function () {
         function NGame() {
             this._TAG = "NGame";
         }
@@ -2312,12 +2417,12 @@ var ngame;
          */
         NGame.prototype.init = function () {
             // 初始化框架log
-            ngame.log = new ninlgde.Logger(7, "NGAME");
-            ngame.log.info(this._TAG, "Ninlgde Game has initialized");
+            ngame.logger = new ninlgde.Logger(7, "NGAME");
+            ngame.logger.info(this._TAG, "Ninlgde Game has initialized");
         };
+        NGame.instance = null;
         return NGame;
     }());
-    NGame.instance = null;
     ngame.NGame = NGame;
 })(ngame || (ngame = {}));
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/ICommand.ts'/>
@@ -2342,7 +2447,7 @@ var puremvc;
      * but instead, should override the <code>initializeMacroCommand</code> method, calling
      * <code>addSubCommand</code> once for each <i>SubCommand</i> to be executed.
      */
-    var MacroCommand = (function (_super) {
+    var MacroCommand = /** @class */ (function (_super) {
         __extends(MacroCommand, _super);
         /**
          * Constructs a <code>MacroCommand</code> instance.
@@ -2445,7 +2550,7 @@ var puremvc;
      * Your subclass should override the <code>execute</code> method where your business logic will
      * handle the <code>INotification</code>.
      */
-    var SimpleCommand = (function (_super) {
+    var SimpleCommand = /** @class */ (function (_super) {
         __extends(SimpleCommand, _super);
         function SimpleCommand() {
             return _super !== null && _super.apply(this, arguments) || this;
@@ -2479,7 +2584,7 @@ var puremvc;
      * Typically, a <code>Mediator</code> will be written to serve one specific control or group
      * controls and so, will not have a need to be dynamically named.
      */
-    var Mediator = (function (_super) {
+    var Mediator = /** @class */ (function (_super) {
         __extends(Mediator, _super);
         /**
          * Constructs a <code>Mediator</code> instance.
@@ -2581,14 +2686,14 @@ var puremvc;
          */
         Mediator.prototype.onRemove = function () {
         };
+        /**
+         * Default name of the <code>Mediator</code>.
+         *
+         * @constant
+         */
+        Mediator.NAME = 'Mediator';
         return Mediator;
     }(puremvc.Notifier));
-    /**
-     * Default name of the <code>Mediator</code>.
-     *
-     * @constant
-     */
-    Mediator.NAME = 'Mediator';
     puremvc.Mediator = Mediator;
 })(puremvc || (puremvc = {}));
 ///<reference path='../../../../../../org/puremvc/typescript/multicore/interfaces/IProxy.ts'/>
@@ -2615,7 +2720,7 @@ var puremvc;
      * <LI>Encapsulate interaction with local or remote services used to fetch and persist model
      * data.
      */
-    var Proxy = (function (_super) {
+    var Proxy = /** @class */ (function (_super) {
         __extends(Proxy, _super);
         /**
          * Constructs a <code>Proxy</code> instance.
@@ -2686,14 +2791,14 @@ var puremvc;
          */
         Proxy.prototype.onRemove = function () {
         };
+        /**
+         * The default name of the <code>Proxy</code>
+         *
+         * @type
+         * @constant
+         */
+        Proxy.NAME = "Proxy";
         return Proxy;
     }(puremvc.Notifier));
-    /**
-     * The default name of the <code>Proxy</code>
-     *
-     * @type
-     * @constant
-     */
-    Proxy.NAME = "Proxy";
     puremvc.Proxy = Proxy;
 })(puremvc || (puremvc = {}));
