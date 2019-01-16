@@ -1,6 +1,7 @@
 import SoldierNode from "./SoldierNode";
 
 
+
 const { ccclass, property } = cc._decorator;
 
 @ccclass
@@ -36,6 +37,11 @@ export default class PlayNode extends cc.Component {
         this.labelMoney.string = "当前金币:" + this.money
     }
 
+    //招募士兵按钮回调
+    onBtnRecruit() {
+        this.createSolder()
+    }
+
     //创建新的基础士兵
     createSolder() {
         let index = this.getFreeIndex()
@@ -50,7 +56,6 @@ export default class PlayNode extends cc.Component {
             this.soldiersList[index].setSoldierLevel(1)
             this.soldiersList[index].setPosForIndex(index)
         }
-
     }
 
     //获取可用空地,按顺序
@@ -128,7 +133,9 @@ export default class PlayNode extends cc.Component {
     }
 
     figureTouchCancel(event: cc.Event.EventTouch) {
-        this.clearTempSoldierNode()
+        if (this.tempSoldier) {
+            this.clearTempSoldierNode()
+        }
     }
 
     figureTouchEnded(event: cc.Event.EventTouch) {
