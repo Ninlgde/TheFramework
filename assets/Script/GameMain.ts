@@ -48,6 +48,8 @@ export default class GameMain extends cc.Component {
         // start ninlgde framework
         ninlgde.GameFrame.getInstance().start()
 
+        // ninlgde.net.HTTP.sendRequest()
+
         // let connect: WebSocket = new WebSocket("ws://127.0.0.1:8080/ws")
         
         // connect.onmessage = function (msg) {
@@ -58,7 +60,7 @@ export default class GameMain extends cc.Component {
         //     connect.send("（cocos）:hhhhhhhhhhh")
         // }
         
-        ninlgde.ui.UIManager.getInstance().showUI("UICocosLogo")
+        // ninlgde.ui.UIManager.getInstance().showUI("UICocosLogo")
         ninlgde.ui.UIManager.getInstance().showUI("UIPlayNode")
     }
 }

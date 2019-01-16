@@ -27,7 +27,7 @@ export class UIConfig extends cc.Component {
 
         // test ui
         this._conf.put('UICocosLogo',           new ninlgde.ui.UIConfItem('Prefab/cocoslogo.prefab', null, ninlgde.ui.LAYOUR.DEBUG))
-        this._conf.put('UIPlayNode',           new ninlgde.ui.UIConfItem('Prefab/playNode.prefab', null, ninlgde.ui.LAYOUR.DEBUG))
+        this._conf.put('UIPlayNode',            new ninlgde.ui.UIConfItem('Prefab/playNode.prefab', null, ninlgde.ui.LAYOUR.SENCE))
     }
 
     public get config(): ninlgde.collection.HashMap<string, ninlgde.ui.UIConfItem>  {

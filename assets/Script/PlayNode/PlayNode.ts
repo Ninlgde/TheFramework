@@ -7,6 +7,8 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class PlayNode extends cc.Component {
 
+    _TAG: string = "PlayNode"
+
     @property(cc.Label)
     labelMoney: cc.Label = null
     //触摸节点
@@ -39,6 +41,7 @@ export default class PlayNode extends cc.Component {
 
     //招募士兵按钮回调
     onBtnRecruit() {
+        ninlgde.logger.debug(this._TAG, "onBtnRecruit");
         this.createSolder()
     }
 
