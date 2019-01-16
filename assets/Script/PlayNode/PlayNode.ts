@@ -46,7 +46,6 @@ export default class PlayNode extends cc.Component {
     //招募士兵按钮回调
     onBtnRecruit() {
         ninlgde.logger.debug(this._TAG, "onBtnRecruit");
-        this.createSolder()
         if (this.money < 20) {
             ninlgde.logger.info(this._TAG, "金币不足")
         } else {
