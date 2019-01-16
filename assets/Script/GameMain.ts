@@ -59,6 +59,6 @@ export default class GameMain extends cc.Component {
         // }
         
         ninlgde.ui.UIManager.getInstance().showUI("UICocosLogo")
-
+        ninlgde.ui.UIManager.getInstance().showUI("UIPlayNode")
     }
 }
