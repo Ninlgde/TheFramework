@@ -7,6 +7,8 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class PlayNode extends cc.Component {
 
+    private tag = "PlayNode"
+
     @property(cc.Label)
     labelMoney: cc.Label = null
     //触摸节点
@@ -22,6 +24,10 @@ export default class PlayNode extends cc.Component {
     btnRecruit: cc.Button = null
 
     money: number = 140;
+
+    changeMoney(delt: number) {
+        this.money += delt
+    }
 
     //士兵列表
     soldiersList: { [key: number]: SoldierNode } = {}
@@ -39,14 +45,20 @@ export default class PlayNode extends cc.Component {
 
     //招募士兵按钮回调
     onBtnRecruit() {
-        this.createSolder()
+        if (this.money < 20) {
+            ninlgde.logger.info(this.tag, "金币不足")
+        } else {
+            this.changeMoney(-20)
+            this.createSolder()
+        }
+
     }
 
     //创建新的基础士兵
     createSolder() {
         let index = this.getFreeIndex()
         if (index > 8) {
-
+            ninlgde.logger.info(this.tag, "士兵满了")
         } else {
             let soldierNode = cc.instantiate(this.soldierPrefab)
             this.soldiersList[index] = soldierNode.getComponent(SoldierNode)
@@ -168,5 +180,8 @@ export default class PlayNode extends cc.Component {
         this.touchNode.on(cc.Node.EventType.TOUCH_END, this.figureTouchEnded, this)
     }
 
-    // update (dt) {}
+    update(dt) {
+        this.setLabelMoney()
+    }
+
 }

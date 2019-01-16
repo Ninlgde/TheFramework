@@ -24,10 +24,12 @@ export class UIConfig extends cc.Component {
         this._conf.put('UISplash',              new ninlgde.ui.UIConfItem(this.UI_PATH + "UISplash.prefab", null, ninlgde.ui.LAYOUR.SENCE))
         this._conf.put('UIHall',                new ninlgde.ui.UIConfItem(this.UI_PATH + "UIHall.prefab", null, ninlgde.ui.LAYOUR.SENCE))
         this._conf.put('UIGame',                new ninlgde.ui.UIConfItem(this.UI_PATH + "UIGame.prefab", null, ninlgde.ui.LAYOUR.SENCE))
+        
+        this._conf.put('UIPlayNode',           new ninlgde.ui.UIConfItem('Prefab/playNode.prefab', null, ninlgde.ui.LAYOUR.SENCE))
 
         // test ui
         this._conf.put('UICocosLogo',           new ninlgde.ui.UIConfItem('Prefab/cocoslogo.prefab', null, ninlgde.ui.LAYOUR.DEBUG))
-        this._conf.put('UIPlayNode',           new ninlgde.ui.UIConfItem('Prefab/playNode.prefab', null, ninlgde.ui.LAYOUR.DEBUG))
+        
     }
 
     public get config(): ninlgde.collection.HashMap<string, ninlgde.ui.UIConfItem>  {

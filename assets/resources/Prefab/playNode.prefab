@@ -572,7 +572,7 @@
     },
     "component": "",
     "_componentId": "3ad2bj4McVA87mOzpU2Izxq",
-    "handler": "createSolder",
+    "handler": "onBtnRecruit",
     "customEventData": ""
   },
   {

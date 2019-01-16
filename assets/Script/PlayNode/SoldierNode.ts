@@ -1,3 +1,5 @@
+import PlayNode from "./PlayNode";
+
 // Learn TypeScript:
 //  - [Chinese] https://docs.cocos.com/creator/manual/zh/scripting/typescript.html
 //  - [English] http://www.cocos2d-x.org/docs/creator/manual/en/scripting/typescript.html
@@ -21,13 +23,20 @@ export default class SoldierNode extends cc.Component {
 
     level: number = 1
 
+    profit: number = 1
+    //主控件
+    playNode: PlayNode = null
+
     setSoldierLevel(level: number) {
         this.level = level
+        this.profit = level
         this.labelName.string = level.toString()
     }
 
     upgradeSoldierLevel() {
         this.level += 1
+        this.profit = this.level
+        this.labelReward.string = "+" + this.profit
         this.labelName.string = this.level.toString()
     }
 
@@ -43,6 +52,29 @@ export default class SoldierNode extends cc.Component {
     destroySelf() {
         this.node.destroy()
     }
+
+    showProfit() {
+        this.labelReward.node.active = true
+        this.labelReward.node.y = 69
+        let action = cc.moveTo(1, -2, 79)
+        let callback = cc.callFunc(() => {
+            this.labelReward.node.active = false
+        })
+
+        this.labelReward.node.runAction(cc.sequence(action, callback))
+    }
+
+    onLoad() {
+        let node = cc.find("Canvas/sceneLayout/playNode")
+        this.playNode = cc.find("Canvas/sceneLayout/playNode").getComponent(PlayNode)
+        this.labelReward.node.active = false
+        this.schedule(() => {
+            this.playNode.changeMoney(this.profit)
+            this.showProfit()
+        }, 3, cc.macro.REPEAT_FOREVER)
+    }
+
+
 
 
 }
