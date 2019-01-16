@@ -25,6 +25,10 @@ export default class PlayNode extends cc.Component {
 
     money: number = 140;
 
+    changeMoney(delt: number) {
+        this.money += delt
+    }
+
     //士兵列表
     soldiersList: { [key: number]: SoldierNode } = {}
     //已用士兵的位置,用于创建新士兵时算位置
@@ -43,13 +47,20 @@ export default class PlayNode extends cc.Component {
     onBtnRecruit() {
         ninlgde.logger.debug(this._TAG, "onBtnRecruit");
         this.createSolder()
+        if (this.money < 20) {
+            ninlgde.logger.info(this._TAG, "金币不足")
+        } else {
+            this.changeMoney(-20)
+            this.createSolder()
+        }
+
     }
 
     //创建新的基础士兵
     createSolder() {
         let index = this.getFreeIndex()
         if (index > 8) {
-
+            ninlgde.logger.info(this._TAG, "士兵满了")
         } else {
             let soldierNode = cc.instantiate(this.soldierPrefab)
             this.soldiersList[index] = soldierNode.getComponent(SoldierNode)
@@ -171,5 +182,8 @@ export default class PlayNode extends cc.Component {
         this.touchNode.on(cc.Node.EventType.TOUCH_END, this.figureTouchEnded, this)
     }
 
-    // update (dt) {}
+    update(dt) {
+        this.setLabelMoney()
+    }
+
 }
