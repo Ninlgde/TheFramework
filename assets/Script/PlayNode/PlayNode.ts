@@ -132,6 +132,9 @@ export default class PlayNode extends cc.Component {
     }
 
     figureTouchEnded(event: cc.Event.EventTouch) {
+        if (!this.tempSoldier) {
+            return
+        }
         let targetIndex = this.converPosToIndex(event.getLocation())
         let originalNSoldier = this.soldiersList[this.tempIndex]
         let targetSoldier = this.soldiersList[targetIndex]
