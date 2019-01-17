@@ -7,7 +7,7 @@ const { ccclass, property } = cc._decorator;
 @ccclass
 export default class PlayNode extends cc.Component {
 
-    _TAG: string = "PlayNode"
+    private tag = "PlayNode"
 
     @property(cc.Label)
     labelMoney: cc.Label = null
@@ -19,11 +19,21 @@ export default class PlayNode extends cc.Component {
     @property(cc.Prefab)
     soldierPrefab: cc.Prefab = null
 
-    //招募士兵按钮
-    @property(cc.Button)
-    btnRecruit: cc.Button = null
+    //招募士兵花费提示
+    @property(cc.Label)
+    labelCostTip: cc.Label = null
+
+    //辞退士兵容器
+    @property(cc.Node)
+    layoutDeleteSoldier: cc.Node = null
+
+    //辞退士兵提示
+    @property(cc.Label)
+    labelDeleteTip: cc.Label = null
+
 
     money: number = 140;
+    solderCost: number = 10;
 
     changeMoney(delt: number) {
         this.money += delt
@@ -43,32 +53,42 @@ export default class PlayNode extends cc.Component {
         this.labelMoney.string = "当前金币:" + this.money
     }
 
+    newSolderCost(): number {
+        return Math.floor(this.solderCost)
+    }
+
+    gainCost() {
+        this.solderCost += 0.5
+
+        this.labelCostTip.string = "招募士兵:" + this.newSolderCost() + "金币"
+        this.labelDeleteTip.string = "辞退士兵:\n" + this.newSolderCost() * 10 + "金币"
+    }
+
     //招募士兵按钮回调
     onBtnRecruit() {
-        ninlgde.logger.debug(this._TAG, "onBtnRecruit");
-        if (this.money < 20) {
-            ninlgde.logger.info(this._TAG, "金币不足")
+        if (this.money < this.newSolderCost()) {
+            ninlgde.logger.info(this.tag, "金币不足")
         } else {
-            this.changeMoney(-20)
-            this.createSolder()
+            let index = this.getFreeIndex()
+            if (index > 8) {
+                ninlgde.logger.info(this.tag, "士兵满了")
+            } else {
+                this.changeMoney(-this.newSolderCost())
+                this.gainCost()
+                this.createSolder(index)
+            }
         }
-
     }
 
     //创建新的基础士兵
-    createSolder() {
-        let index = this.getFreeIndex()
-        if (index > 8) {
-            ninlgde.logger.info(this._TAG, "士兵满了")
-        } else {
-            let soldierNode = cc.instantiate(this.soldierPrefab)
-            this.soldiersList[index] = soldierNode.getComponent(SoldierNode)
-            this.usedNodeIndexs[index] = true
-            this.touchNode.addChild(soldierNode)
+    createSolder(index: number) {
+        let soldierNode = cc.instantiate(this.soldierPrefab)
+        this.soldiersList[index] = soldierNode.getComponent(SoldierNode)
+        this.usedNodeIndexs[index] = true
+        this.touchNode.addChild(soldierNode)
 
-            this.soldiersList[index].setSoldierLevel(1)
-            this.soldiersList[index].setPosForIndex(index)
-        }
+        this.soldiersList[index].setSoldierLevel(1)
+        this.soldiersList[index].setPosForIndex(index)
     }
 
     //获取可用空地,按顺序
@@ -136,6 +156,7 @@ export default class PlayNode extends cc.Component {
             this.tempSoldier = tempNode.getComponent(SoldierNode)
             this.touchNode.addChild(tempNode)
             this.tempIndex = index
+            tempNode.stopAllActions()
         }
     }
 
@@ -145,8 +166,20 @@ export default class PlayNode extends cc.Component {
         }
     }
 
+    //计算取消touch的地方位于删除节点的位置
+    getIsInDeleteNode(pos: cc.Vec2): boolean {
+        let targetPos = this.layoutDeleteSoldier.convertToNodeSpace(pos)
+        let size = this.layoutDeleteSoldier.getContentSize()
+
+        return (targetPos.x > 0 && targetPos.x < size.width && targetPos.y > 0 && targetPos.y < size.height)
+    }
+
     figureTouchCancel(event: cc.Event.EventTouch) {
         if (this.tempSoldier) {
+            if (this.getIsInDeleteNode(event.getLocation()) && this.money > this.newSolderCost() * 10) {
+                this.changeMoney(-this.newSolderCost() * 10)
+                this.clearSoldierByIndex(this.tempIndex)
+            }
             this.clearTempSoldierNode()
         }
     }
@@ -174,7 +207,7 @@ export default class PlayNode extends cc.Component {
 
     start() {
         this.setLabelMoney()
-
+        this.gainCost()
         this.touchNode.on(cc.Node.EventType.TOUCH_START, this.figureTouchStart, this)
         this.touchNode.on(cc.Node.EventType.TOUCH_MOVE, this.figureTouchMoved, this)
         this.touchNode.on(cc.Node.EventType.TOUCH_CANCEL, this.figureTouchCancel, this)
