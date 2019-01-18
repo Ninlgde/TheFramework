@@ -31,6 +31,7 @@ export default class SoldierNode extends cc.Component {
         this.level = level
         this.profit = level
         this.labelName.string = level.toString()
+        this.labelReward.string = "+" + this.profit
     }
 
     upgradeSoldierLevel() {
@@ -56,7 +57,7 @@ export default class SoldierNode extends cc.Component {
     showProfit() {
         this.labelReward.node.active = true
         this.labelReward.node.y = 69
-        let action = cc.moveTo(1, -2, 79)
+        let action = cc.moveTo(1, 0, 79)
         let callback = cc.callFunc(() => {
             this.labelReward.node.active = false
         })

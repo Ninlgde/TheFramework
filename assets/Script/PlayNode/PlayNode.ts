@@ -31,9 +31,20 @@ export default class PlayNode extends cc.Component {
     @property(cc.Label)
     labelDeleteTip: cc.Label = null
 
+    //主公信息
+    @property(cc.Label)
+    labelMasterInfo: cc.Label = null
+    //主公升级提示
+    @property(cc.Label)
+    labelMasterCost: cc.Label = null
+    //自然增长提示
+    @property(cc.Label)
+    labelAccrualProfit: cc.Label = null
 
     money: number = 140;
     solderCost: number = 10;
+    masterLevel: number = 1;
+    masterCostBase: number = 100
 
     changeMoney(delt: number) {
         this.money += delt
@@ -63,6 +74,15 @@ export default class PlayNode extends cc.Component {
         this.labelCostTip.string = "招募士兵:" + this.newSolderCost() + "金币"
         this.labelDeleteTip.string = "辞退士兵:\n" + this.newSolderCost() * 10 + "金币"
     }
+    //设置主公信息
+    setMasterInfo() {
+        this.labelMasterCost.string = "升级主公:" + this.masterCost().toString() + "金币"
+        this.labelMasterInfo.string = "主公等级:" + this.masterLevel + "(招募士兵的等级与主公等级相同)"
+    }
+
+    masterCost(): number {
+        return this.masterCostBase * this.masterLevel * this.masterLevel
+    }
 
     //招募士兵按钮回调
     onBtnRecruit() {
@@ -79,6 +99,15 @@ export default class PlayNode extends cc.Component {
             }
         }
     }
+    //升级主公
+    upgradeMaster() {
+        if (this.money < this.masterCost()) {
+            return
+        }
+        this.changeMoney(-this.masterCost())
+        this.masterLevel += 1
+        this.setMasterInfo()
+    }
 
     //创建新的基础士兵
     createSolder(index: number) {
@@ -87,7 +116,7 @@ export default class PlayNode extends cc.Component {
         this.usedNodeIndexs[index] = true
         this.touchNode.addChild(soldierNode)
 
-        this.soldiersList[index].setSoldierLevel(1)
+        this.soldiersList[index].setSoldierLevel(this.masterLevel)
         this.soldiersList[index].setPosForIndex(index)
     }
 
@@ -205,9 +234,34 @@ export default class PlayNode extends cc.Component {
         this.clearTempSoldierNode()
     }
 
+    //设置自然增长
+    setNaturalIncrease() {
+        this.labelAccrualProfit.node.active = false
+        this.schedule(() => {
+            this.changeMoney(this.masterLevel)
+            this.showProfit()
+        }, 3, cc.macro.REPEAT_FOREVER)
+    }
+
+    showProfit() {
+        this.labelAccrualProfit.node.active = true
+        this.labelAccrualProfit.node.y = 427
+        this.labelAccrualProfit.string = "+" + this.masterLevel
+        let action = cc.moveTo(1, -80, 437)
+        let callback = cc.callFunc(() => {
+            this.labelAccrualProfit.node.active = false
+        })
+        this.labelAccrualProfit.node.runAction(cc.sequence(action, callback))
+    }
+
+
+
     start() {
         this.setLabelMoney()
         this.gainCost()
+
+        this.setMasterInfo()
+        this.setNaturalIncrease()
         this.touchNode.on(cc.Node.EventType.TOUCH_START, this.figureTouchStart, this)
         this.touchNode.on(cc.Node.EventType.TOUCH_MOVE, this.figureTouchMoved, this)
         this.touchNode.on(cc.Node.EventType.TOUCH_CANCEL, this.figureTouchCancel, this)
